@@ -12,3 +12,9 @@ class DataDirectory():
         file_list = os.listdir(dir_path)
         file_list.sort()
         return file_list
+
+    def get_origin_label(self, file_name):
+        return self.label_dir + file_name + ".json"
+
+    def get_origin_image(self, file_name):
+        return self.image_dir + file_name + ".JPG"
