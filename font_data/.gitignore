@@ -1,2 +1,4 @@
 *.ttf
 *_data/
+*label.txt
+*.png
