@@ -1,5 +1,5 @@
 
-font_list = ['휴먼명조', 'Dotum-03', 'hy헤드라인m', 'GNGT(견고딕)']
+font_list = ['휴먼명조', 'Dotum', 'hy헤드라인m', 'GNGT(견고딕)', 'Gungsuh', 'Batang', 'Gulim']
 Dotum_range = [range(0x0), range(0xa0), range(0x115a, 0x1160), range(0x11a3, 0x11a7), range(0x3000), range(0x3164), range(0xfffc)]
 GNGT_range = [range(0x0, 0x1f), range(0x7f, 0xff), range(0xa4d4, 0xa4fe), range(0x10000)]
 hyheadline_range = [range(0x0, 0xff), range(0xa4d4, 0xa4fe), range(0x10000)]
@@ -10,8 +10,14 @@ import cv2
 import numpy as np
 import os
 import time
+import itertools
 
 EMPTY_IMG = {255}
+
+def ranges(int_list):
+    for a, b in itertools.groupby(enumerate(int_list), lambda pair: pair[1] - pair[0]):
+        b = list(b)
+        yield b[0][1], b[-1][1]
 
 def list_all_files(rootdir, extend):
     if os.path.isdir(rootdir):
@@ -49,11 +55,13 @@ def get_empty_list(img_dir_path):
                 file_list.append(img_path)
     return file_list
 
-font_list = ['휴먼명조', 'Dotum-03', 'hy헤드라인m', 'GNGT(견고딕)']
-root_dir = '/mnt/d/'
+# font_list = ['GNGT(견고딕)']
+root_dir = ''
 start = time.time()
 
 for dir_name in font_list:
-    img_dir_path = f'{root_dir}{dir_name}/'
-    print(get_empty_list(img_dir_path))
+    img_dir_path = f'{root_dir}train{dir_name}_100_data/'
+    empty_list = get_empty_list(img_dir_path)
+    empty_list.sort()
+    print(f'{dir_name} empty list: {empty_list}, len: {len(empty_list)}')
 print("spent:", time.time() - start)
