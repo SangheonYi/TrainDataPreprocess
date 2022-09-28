@@ -26,7 +26,7 @@ def image_preprocess(done_image_dirs: dict, origin_data: OriginData, label_conte
     # count = 0
     for annot_index, annotation in enumerate(origin_data.label_annotations):
         key = rand_key()
-        done_image_dir = done_image_dirs[key]
+        done_image_dir = done_image_dirs["train"]
         cropped_name = f"{origin_data.name}-{annot_index}.jpg"
         text, bbox = origin_data.parse_annotation(annotation)
         try:
