@@ -1,0 +1,8 @@
+cffi==1.15.1
+charset-normalizer==2.1.1
+cryptography==38.0.1
+pdf2image==1.16.0
+pdfminer.six==20220524
+Pillow==9.2.0
+pkg_resources==0.0.0
+pycparser==2.21
