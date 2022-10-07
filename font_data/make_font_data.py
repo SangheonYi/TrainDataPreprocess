@@ -128,9 +128,15 @@ def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10):
 
 def make_fonts_dataset(font_path_list, font_sizes, mode):
     label_lines = []
+    korean_dict = set()
     for font_path in font_path_list:
         support_chars, encoding = get_ttf_support_chars(font_path)
         font_name = font_path[:-4]
+        print("support size: ", len(support_chars))
+        if encoding.startswith("utf"):
+            tmp = [e[0] for e in support_chars]
+            korean_dict = korean_dict.union(tmp)
+            print("dict_size: ", len(korean_dict))
         if support_chars:
             for font_size in font_sizes:
                 save_dir = f'{mode}{font_name}_{font_size}_data'
@@ -140,6 +146,9 @@ def make_fonts_dataset(font_path_list, font_sizes, mode):
                         label_lines.append(f"kor_rec_train/{image_path}\t{label}\n")
         else:
             print(f"{font_path} is empty")
+    with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
+        for e in sorted(korean_dict):
+            kor_dict_file.write(f"{e}\n")
     return label_lines
 
 def write_label_file(label_lines):
