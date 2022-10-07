@@ -23,7 +23,6 @@ class PDFForTrainData():
         upper = self.page_height - upper
         lower = self.page_height - lower
         margin = (lower - upper) * 0.1 * img_rate
-        print(margin)
         return left - margin, \
         upper - (margin) * 2, \
         right + margin, lower + margin
