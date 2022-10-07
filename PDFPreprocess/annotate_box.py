@@ -65,9 +65,11 @@ if 1:
                 cropped_path = f'cropped/{file_name}-{i}-{line.index}.jpg'
                 img.crop([left, upper, right, lower]).save(cropped_path)
                 label_text = line.get_text().replace('  ', ' ')
-                label_file.write(f'{cropped_path}\t{label_text}\n')
+                label_file.write(f'{cropped_path}\t{label_text}')
                 # draw_bbox(line, draw, ((left, lower), (right, upper)))
             # img.save(image_path.replace(tmp_path, 'boxed'), "JPEG")
             img.close()
             print_progress(i, len(converted_list))
             pdf.next_page()
+            # if i > 2:
+            #     break
