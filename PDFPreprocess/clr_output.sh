@@ -1,1 +1,1 @@
-rm -rf cropped/*.jpg output/*.jpg
+rm -rf */*.jpg
