@@ -36,17 +36,17 @@ def logging_time(original_fn):
 def pdf2jpg(file_name, **kwargs):
 	return convert_from_path(f"pdf/{file_name}.pdf", **kwargs)
 
-target = "jeong"
-pdf2jpg_option = {
-	"fmt": "jpg",
-	"single_file": True,
-	# "paths_only": True,
-	"use_pdftocairo": True,
-	"size": (None, 1000),
-	"timeout": 1200, 
-	"thread_count": 4,
-	"output_folder": "converted",
-	"output_file": target
-}
 if __name__=="__main__":
+	target = "jeong"
+	pdf2jpg_option = {
+		"fmt": "jpg",
+		"single_file": True,
+		# "paths_only": True,
+		"use_pdftocairo": True,
+		"size": (None, 1000),
+		"timeout": 1200, 
+		"thread_count": 4,
+		"output_folder": "converted",
+		"output_file": target
+	}
 	pdf2jpg(target, **pdf2jpg_option)
