@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 from fontTools.ttLib import TTFont
 import os
 import struct
+
 def r2l(a, b):
     # list of range from a to b include both a and b
     return list(range(a, b + 1))
@@ -29,7 +30,7 @@ exclude_unicodes = {
     # Latin_Extended_Additional 0x1E00 <= i <= 0x1EFF pass
 
     # General_Punctuation 0x2000 <= i <= 0x206F
-    "General_Punctuation": r2l(0x2000, 0x200F) + [0x2011] + r2l(0x2028, 0x202F) + r2l(0x205F, 0x206F),
+    "General_Punctuation": set(range(0x2000, 0x2070)).difference({0x2030, 0x2031, 0x203B, 0x204B}) , 
     # Superscripts_and_Subscripts 0x2070 <= i <= 0x209F 
     "Superscripts_and_Subscripts": r2l(0x2070, 0x209F),
     # Currency_Symbols 0x20A0 <= i <= 0x20CF
@@ -110,7 +111,7 @@ def createDirectory(directory):
 
 def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10):
     # Image size
-    W = font_size
+    W = int(font_size * 1.2)
     H = W
     # font setting
     encode_type = 'unic' if encoding.startswith("utf") else 'wans'
@@ -118,7 +119,8 @@ def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10):
     image =Image.new('RGB', (W, H), color = 'white')
     draw = ImageDraw.Draw(image)
     # start position for text
-    position_xy = (1, 1)
+    coor = (W - font_size) // 2
+    position_xy = (coor, coor)
     # draw text_to_draw on image
     draw.text(position_xy, text_to_draw, font=font, fill="black")
     # save image
@@ -143,7 +145,7 @@ def make_fonts_dataset(font_path_list, font_sizes, mode):
                 if createDirectory(save_dir):
                     for c, label in support_chars:
                         image_path = make_font_data(c, font_path, encoding, save_dir, font_size=font_size)
-                        label_lines.append(f"kor_rec_train/{image_path}\t{label}\n")
+                        label_lines.append(f"kor_rec/{image_path}\t{label}\n")
         else:
             print(f"{font_path} is empty")
     with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
@@ -197,8 +199,7 @@ def get_ttf_support_chars(font_path):
     return False, ''
 
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', 'GNGT(견고딕).ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
-# font_path_list = ['GNGT(견고딕).ttf']
-font_sizes = [100]
-# , 10, 11, 13, 16]
+# font_path_list = ['Batang.ttf']
+font_sizes = [100, 10, 11, 13, 16, 20]
 label_lines = make_fonts_dataset(font_path_list, font_sizes, 'train')
 write_label_file(label_lines)
