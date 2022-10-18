@@ -12,8 +12,8 @@ class PDFForTrainData():
         self.device = PDFPageAggregator(self.rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(self.rsrcmgr, self.device)
         self.pages = PDFPage.get_pages(self.fp, check_extractable=True)
-        self.page = next(self.pages)
-        self.page_width, self.page_height = self.page.mediabox[-2:]
+        meta_page = next(PDFPage.get_pages(self.fp, check_extractable=True, maxpages=1))
+        self.page_width, self.page_height = meta_page.mediabox[-2:]
 
     def cal_coor(self, bbox, img_rate):
         # image size에 맞게 bbox 비율 고려해야 함
@@ -23,10 +23,5 @@ class PDFForTrainData():
         upper = self.page_height - upper
         lower = self.page_height - lower
         margin = (lower - upper) * 0.1 * img_rate
-        return left - margin, \
-        upper - (margin) * 2, \
-        right + margin, lower + margin
+        return [left - margin, upper - (margin) * 2, right + margin, lower + margin]
         # left, lower, right, top
-    
-    def next_page(self):
-        self.page = next(self.pages)
