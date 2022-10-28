@@ -4,5 +4,6 @@ font
 boxed
 converted
 cropped
+labels
 __pycache__
 *train.txt
