@@ -1,1 +1,1 @@
-rm -rf boxed converted cropped labels
+rm -rf boxed converted cropped labels raw corpus_pdf

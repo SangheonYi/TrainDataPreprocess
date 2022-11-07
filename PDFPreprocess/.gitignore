@@ -5,5 +5,8 @@ boxed
 converted
 cropped
 labels
+raw
+corpus
+corpus_pdf
 __pycache__
 *train.txt
