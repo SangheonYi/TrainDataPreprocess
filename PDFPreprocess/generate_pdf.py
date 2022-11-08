@@ -12,6 +12,7 @@ from os import cpu_count
 import os
 from tqdm import tqdm 
 
+# return splited corpus list by split size(50) lines  
 def get_corpus_list(file, corpus_count):
     # 50 split_size is fastest size to generate pdf
     split_size = 50
@@ -24,7 +25,7 @@ def get_corpus_list(file, corpus_count):
         total_corpus = raw_text_file.readlines()
         return [''.join(total_corpus[idx * split_size:(idx + 1) * split_size]) for idx in range(corpus_count)]
 
-def font_path_to_doc_name(pdf_dir, font_name, font_size, corpus_name, corpus_idx):
+def make_doc_path(pdf_dir, font_name, font_size, corpus_name, corpus_idx):
     extend = '.ttf' if '.ttf' in font_name else '.otf'
     pdf_file_name = font_name.replace(extend, f"_{font_size}_{corpus_name}_{corpus_idx}.pdf")
     return f"{pdf_dir}/{pdf_file_name}"
@@ -58,7 +59,7 @@ def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, dir
     pool = Pool(pool_count)
     for font_name, font_size in font_name_size_product:
         font_path = f"{directories['font_dir']}/{font_name}"
-        doc_path = font_path_to_doc_name(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
+        doc_path = make_doc_path(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
         pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
     pool.close()
     pool.join()

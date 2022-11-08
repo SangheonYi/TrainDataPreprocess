@@ -21,7 +21,7 @@ def draw_bbox(line, draw, rect_coord):
 def pdf_to_jpg(pdf_path, pdf2jpg_option):
     start = time.time()
     result = convert_from_path(pdf_path, **pdf2jpg_option)
-    print(f"convert spent: {time.time() - start}")
+    # print(f"convert spent: {time.time() - start}")
     return result 
 
 def crop_pdf_images(
@@ -29,7 +29,7 @@ def crop_pdf_images(
     pdf_name=None,
     pdf=None,
     directories={
-        'boxed_dir': 'boxed',
+        'boxed_dir': None,
         'cropped_dir': 'cropped'
     },
     img_rate=1,
@@ -37,7 +37,10 @@ def crop_pdf_images(
 ):
     cropped_labels = []
     det_labels = []
-    boxed_dir = os.path.join(directories['boxed_dir'], pdf_name)
+    if directories['boxed_dir']:
+        boxed_dir = os.path.join(directories['boxed_dir'], pdf_name)
+    else:
+        boxed_dir = None
     cropped_dir= os.path.join(directories['cropped_dir'], pdf_name)
     create_directory(boxed_dir)
     create_directory(cropped_dir)
@@ -46,7 +49,8 @@ def crop_pdf_images(
         # open img
         img = Image.open(image_path).convert("RGB")
         # draw bbox feature is commented
-        # draw = ImageDraw.Draw(img)
+        if boxed_dir:
+            draw = ImageDraw.Draw(img)
         img_det_label = []
         line_idx = 0
         for lobj in pdf.device.get_result():
@@ -61,9 +65,12 @@ def crop_pdf_images(
                         points = [[int(left), int(upper)], [int(right), int(upper)], [int(right), int(lower)], [int(left), int(lower)]]
                         img_det_label.append({"transcription": "label_text", "points": points})
                         line_idx += 1
-                        # draw_bbox(line, draw, ((left, lower), (right, upper)))
+                        if boxed_dir:
+                            draw_bbox(line, draw, ((left, lower), (right, upper)))
         det_labels.append(f"{image_path}\t{json.dumps(img_det_label, ensure_ascii=False)}")
-        # img.save(image_path.replace("converted", 'boxed'), "JPEG")
+        if boxed_dir:
+            print(boxed_dir)
+            img.save(image_path.replace("converted", 'boxed'), "JPEG")
         img.close()
     rec_label = ''.join(cropped_labels)
     det_label = '\n'.join(det_labels)
@@ -93,29 +100,27 @@ def convert_and_crop_pdf_images(directories, pdf_name, convert_bool):
         "img_rate":img_rate,
         "directories":directories
     }
-    print(f"converting")
     converted_list = get_file_list(converted_dir)
     if convert_bool:
         create_directory(converted_dir)
         converted_list = pdf_to_jpg(pdf_path, pdf2jpg_option)
     images_size = len(converted_list)
-    print(f"crop from {images_size} converted images")
     crop_arg["total"] = images_size
     crop_arg["zipped_arg"] = zip(pdf.pages, converted_list, range(images_size))
     pdf_label = crop_pdf_images(**crop_arg)
     print(f'{pdf_name}.pdf done')
     return pdf_label
 
-def batch_convert_pdf2crop(pool_count, pdf_names, directories = {
+def batch_convert_pdf2crop(pool_count, pdf_names, pdf2image_bool=True, directories = {
         'pdf_converted_dir':'converted', 
-        'boxed_dir':'boxed', 
+        'boxed_dir':None, 
         'cropped_dir':'cropped', 
         'label_dir': 'labels',
         'pdf_dir': 'corpus_pdf'
     }):
     pool = Pool(pool_count)
     print("cpu count:", pool_count)
-    results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(directories, pdf_name, True)) for pdf_name in pdf_names}
+    results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(directories, pdf_name, pdf2image_bool)) for pdf_name in pdf_names}
     pool.close()
     pool.join()
     rec_total_label = ''
@@ -129,8 +134,8 @@ def batch_convert_pdf2crop(pool_count, pdf_names, directories = {
 def write_labels(label_dir, det_label, rec_label, det_label_name='det_train', rec_label_name='rec_banila_train'):
     with open(f'{label_dir}/{rec_label_name}.txt', 'w', encoding='utf-8') as rec_label_file:
         rec_label_file.write(rec_label)
-    # with open(f'{label_dir}/{det_label_name}.txt', 'w', encoding='utf-8') as det_label_file:
-    #     det_label_file.write(det_label)
+    with open(f'{label_dir}/{det_label_name}.txt', 'w', encoding='utf-8') as det_label_file:
+        det_label_file.write(det_label)
 
 if __name__ == '__main__':
     pool_count = os.cpu_count()
@@ -141,7 +146,7 @@ if __name__ == '__main__':
     }
     directories = {
         'pdf_converted_dir':'converted', 
-        'boxed_dir':'boxed', 
+        'boxed_dir':'boxed', # if None not save boxed image
         'cropped_dir':'cropped', 
         'label_dir': 'labels',
         'pdf_dir': 'corpus_pdf'
@@ -154,7 +159,7 @@ if __name__ == '__main__':
 
     step = pool_count * 2
     for pdf_idx in range(0, len(pdf_names), step):
-        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], directories=directories)
+        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2image_bool=True, directories=directories)
         det_rec_label_dict['det'] = f"{det_rec_label_dict['det']}{det_label}"
         det_rec_label_dict['rec'] = f"{det_rec_label_dict['rec']}{rec_label}"
     write_labels(directories['label_dir'], det_rec_label_dict['det'], det_rec_label_dict['rec'])

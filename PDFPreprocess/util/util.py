@@ -2,12 +2,15 @@ import os
 import time
 
 def create_directory(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if path:
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 def create_directories(paths):
     for path in paths:
-        create_directory(path)
+        if path:
+            create_directory(path)
+            
 
 def get_file_list(path):
     for root, dir, file_list in os.walk(path):
