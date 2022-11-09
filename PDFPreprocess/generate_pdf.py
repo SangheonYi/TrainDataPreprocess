@@ -11,6 +11,7 @@ from multiprocessing import Pool
 from os import cpu_count
 import os
 from tqdm import tqdm 
+from pathlib import Path
 
 # return splited corpus list by split size(50) lines  
 def get_corpus_list(file, corpus_count):
@@ -31,7 +32,7 @@ def make_doc_path(pdf_dir, font_name, font_size, corpus_name, corpus_idx):
     return f"{pdf_dir}/{pdf_file_name}"
 
 def generate_pdf(text, font_path, font_size, doc_path):
-    if os.path.exists(font_path):
+    if Path(font_path).exists():
         font = TTFont("HCR Batang", font_path)
     else:
         print(f"{font_path} font not found")
@@ -60,7 +61,8 @@ def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, dir
     for font_name, font_size in font_name_size_product:
         font_path = f"{directories['font_dir']}/{font_name}"
         doc_path = make_doc_path(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
-        pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
+        if Path(doc_path).exists():
+            pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
     pool.close()
     pool.join()
 

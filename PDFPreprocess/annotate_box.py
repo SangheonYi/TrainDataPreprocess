@@ -10,6 +10,7 @@ from multiprocessing import Pool
 from os import cpu_count
 import os
 from itertools import product
+from pathlib import Path
 
 def draw_bbox(line, draw, rect_coord):
     # text = line.get_text()
@@ -59,7 +60,8 @@ def crop_pdf_images(
                     if isinstance(line, LTTextLineHorizontal):
                         cropped_path = f'{cropped_dir}/{page_num}_{line_idx}.jpg'
                         left, upper, right, lower = pdf.cal_coor(line.bbox, img_rate)
-                        img.crop([left, upper, right, lower]).save(cropped_path)
+                        if not Path(cropped_path).exists():
+                            img.crop([left, upper, right, lower]).save(cropped_path)
                         label_text = line.get_text().replace('  ', ' ')
                         cropped_labels.append(f'{cropped_path}\t{label_text}')
                         points = [[int(left), int(upper)], [int(right), int(upper)], [int(right), int(lower)], [int(left), int(lower)]]
@@ -68,8 +70,7 @@ def crop_pdf_images(
                         if boxed_dir:
                             draw_bbox(line, draw, ((left, lower), (right, upper)))
         det_labels.append(f"{image_path}\t{json.dumps(img_det_label, ensure_ascii=False)}")
-        if boxed_dir:
-            print(boxed_dir)
+        if boxed_dir and not Path(image_path.replace("converted", 'boxed')).exists():
             img.save(image_path.replace("converted", 'boxed'), "JPEG")
         img.close()
     rec_label = ''.join(cropped_labels)
@@ -119,7 +120,6 @@ def batch_convert_pdf2crop(pool_count, pdf_names, pdf2image_bool=True, directori
         'pdf_dir': 'corpus_pdf'
     }):
     pool = Pool(pool_count)
-    print("cpu count:", pool_count)
     results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(directories, pdf_name, pdf2image_bool)) for pdf_name in pdf_names}
     pool.close()
     pool.join()
@@ -132,7 +132,10 @@ def batch_convert_pdf2crop(pool_count, pdf_names, pdf2image_bool=True, directori
     return det_total_label, rec_total_label
 
 def write_labels(label_dir, det_label, rec_label, det_label_name='det_train', rec_label_name='rec_banila_train'):
-    with open(f'{label_dir}/{rec_label_name}.txt', 'w', encoding='utf-8') as rec_label_file:
+    rec_label = f'{label_dir}/{rec_label_name}.txt'
+    rec_rw = 'w'
+    if Path(rec_label).exists():
+    with open(rec_label, 'w', encoding='utf-8') as rec_label_file:
         rec_label_file.write(rec_label)
     with open(f'{label_dir}/{det_label_name}.txt', 'w', encoding='utf-8') as det_label_file:
         det_label_file.write(det_label)
