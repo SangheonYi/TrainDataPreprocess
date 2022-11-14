@@ -17,6 +17,7 @@ from pathlib import Path
 def get_corpus_list(file, corpus_count):
     # 50 split_size is fastest size to generate pdf
     split_size = 50
+    # get corpus_count length split_size size corpus list
 
     # kor_tech
     # 50 split_size -> 9KB raw text
@@ -61,7 +62,7 @@ def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, dir
     for font_name, font_size in font_name_size_product:
         font_path = f"{directories['font_dir']}/{font_name}"
         doc_path = make_doc_path(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
-        if Path(doc_path).exists():
+        if not Path(doc_path).exists():
             pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
     pool.close()
     pool.join()

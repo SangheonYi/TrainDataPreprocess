@@ -4,7 +4,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 
 class PDFForTrainData():
-    def __init__(self, pdf_path) -> None:
+    def __init__(self, pdf_path, img_rate) -> None:
         # pdf init
         self.fp = open(pdf_path, 'rb')
         self.rsrcmgr = PDFResourceManager()
@@ -14,14 +14,15 @@ class PDFForTrainData():
         self.pages = PDFPage.get_pages(self.fp, check_extractable=True)
         meta_page = next(PDFPage.get_pages(self.fp, check_extractable=True, maxpages=1))
         self.page_width, self.page_height = meta_page.mediabox[-2:]
+        self.img_rate = img_rate
 
-    def cal_coor(self, bbox, img_rate):
+    def cal_coor(self, bbox):
         # image size에 맞게 bbox 비율 고려해야 함
         left, lower, right, upper = bbox
         # pdf의 영점은 좌측 하단 != 이미지의 영점은 좌측 상단
         # 영점조절 (lower-left, upper-right)
         upper = self.page_height - upper
         lower = self.page_height - lower
-        margin = (lower - upper) * 0.1 * img_rate
+        margin = (lower - upper) * 0.1 * self.img_rate
         return [left - margin, upper - (margin) * 2, right + margin, lower + margin]
         # left, lower, right, top

@@ -24,3 +24,12 @@ def logging_time(original_fn):
         print("WorkingTime[{}]: {} sec".format(original_fn.__name__, end_time-start_time))
         return result
     return wrapper_fn
+
+def is_valid_rec_list(file_name):
+    with open(file_name, 'r', encoding='utf-8') as data_file:
+        for line in data_file:
+            path, GT = line.split('\t')
+            if not os.path.exists(path):
+                print("not exist:", path)
+                return False
+    return True
