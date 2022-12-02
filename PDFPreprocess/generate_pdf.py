@@ -69,9 +69,9 @@ def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, dir
 
 if __name__ == '__main__':
     font_sizes = [8, 10, 14, 20, 24]
-    # font_sizes = [8, 20]
+    font_sizes = [8]
     font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
-    # font_names = ['Batang.ttf']
+    font_names = ['human_myoungjo.ttf']
     corpus_name = 'kor_tech'
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', 1)
     pool_count = cpu_count()
@@ -80,10 +80,11 @@ if __name__ == '__main__':
         'font_dir': 'font'
     }
     create_directories(directories.values())
-    for corpus_idx, text in tqdm(enumerate(corpus_list), total=len(corpus_list)):
-        corpus = {
-            'idx': corpus_idx,
-            'text': text,
-            'name': corpus_name
-        }
-        batch_convert_co2pdf(pool_count, corpus, product(font_names, font_sizes), directories=directories)
+    generate_pdf("hello 안녕 세계 world", 'font/human_myoungjo.ttf', 8, 'corpus_pdf/test.pdf')
+    # for corpus_idx, text in tqdm(enumerate(corpus_list), total=len(corpus_list)):
+    #     corpus = {
+    #         'idx': corpus_idx,
+    #         'text': text,
+    #         'name': corpus_name
+    #     }
+    #     batch_convert_co2pdf(pool_count, corpus, product(font_names, font_sizes), directories=directories)

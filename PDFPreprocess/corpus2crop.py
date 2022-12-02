@@ -29,7 +29,16 @@ def cor2crop(font_config, corpus_name, corpus_list, directories={
         batch_convert_co2pdf(pool_count, corpus, font_config, directories=directories)
 
     ## convert and crop tmp pdfs
-    
+    pdf2jpg_option = {
+        "fmt": "jpg",
+        # "single_file": True,
+        "paths_only": True,
+        "use_pdftocairo": True,
+        "timeout": 1200, 
+        "thread_count": 4,
+        "output_folder": directories['pdf_converted_dir'],
+        "last_page" : 1
+    }
     # get font, size pdf
     pdf_names = [corpus_pdf_path.replace(f"{directories['pdf_dir']}/", '').replace('.pdf', '') 
     for corpus_pdf_path in get_file_list(directories['pdf_dir'])]
@@ -39,7 +48,7 @@ def cor2crop(font_config, corpus_name, corpus_list, directories={
     rec_label_list = []
     step = pool_count
     for pdf_idx in range(0, len(pdf_names), step):
-        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2image_bool=True, directories=directories)
+        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2jpg_option, pdf2image_bool=True, directories=directories)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
     write_label(directories['label_dir'], rec_label_list, 'rec_banila_train')
@@ -58,7 +67,7 @@ if __name__ == '__main__':
     corpus_count = 25631
     
     corpus_name = 'kor_tech'
-    corpus_count = 14
+    corpus_count = 1
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', corpus_count)
     step_size = 125
     corpus_range = range(0, corpus_count, step_size)
