@@ -11,10 +11,43 @@ import os
 from pathlib import Path
 import json
 from recog_valid_unicode import *
+import tarfile
 
-exclude_chr_set = {'\\', '²', '³', '¹', 'ʱ', 'ʲ', 'ʳ', 'ʴ', 'ʵ', 'ʶ', 'ʼ', '˅', 'ˇ', 'ː', '˝', '˪', '˯', '˹', '˻', '˼', '́', '̇', '͠', 'ʹ', 'Ϛ',  'ᄒ', 'ᆫ', '‣', '⁃', '⁋', '₃', '⃝', '⃞', '↳', '⇀', '⇄', '⇐', '⇓', '⇛', '⇦', '⇨', '⇩', '∎', '∘', '≼', '≽', '⋅', '⋗', '⋯', '⌌', '⌎', '⌜', '⌟', '⑯', '⑰', '⑱', '⑲', '⑳', '⓵', '⓶', '⓷', '─', '━', '│', '┃', '┌', '┍', '┏', '┓', '└', '┕', '┗', '┛', '├', '┠', '┣', '┤', '┨', '┬', '┯', '┷', '┼', '╂', '╺', '▄', '▢', '▮', '▴', '▵', '▸', '▹', '▻', '◉', '◌', '◪', '◯', '◼', '◽', '◾', '☐', '☑', '⚪', '⚫', '⚬', '✍', '✐', '✔', '✕', '✥', '✳', '✻', '❊', '❋', '❖', '❙', '❚', '❯', '❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿', '➀', '➁', '➂', '➃', '➄', '➅', '➆', '➇', '➈', '➉', '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', '➔', '➙', '➜', '➠', '➡', '➢', '➣', '➤', '➥', '➩', '➪', '➭', '➮', '➯', '➲', '⟦', '⟧', '⟶', '⟹', '⟺', '⦁', '⧠', '⬞', '⭕', '⸢', '⸱', '〇', '〖', '〗', '〜', '〮', '・', '㉑', '㉔', '㉕', '㉖', '㉗', '㉘', '㉙', '㉚', '㉛', '㉝', '㉞', '㊞', '㊱', '㊲', '㊳', '㊴', '㊶', '㊷', '㊸', '㊺', '￭'}
+exclude_chr_set = {'\\', '²', '³', '¹', 'ʱ', 'ʲ', 'ʳ', 'ʴ', 'ʵ', 'ʶ', 'ʼ', '˅', 'ˇ', 'ː', '˝', '˪', '˯', 
+'˹', '˻',  '́', '̇', '͠', 'ʹ', 'Ϛ',  'ᄒ', 'ᆫ', '‣', '⁃', '⁋', '₃', '⃝', '⃞', '↳', '⇀', '⇄', '⇐', '⇓', '⇛', 
+'⇦', '⇨', '⇩', '∎', '∘', '≼', '≽', '⋅', '⋗', '⋯', '⌌', '⌎', '⌜', '⌟', 
+
+'⑯', '⑰', '⑱', '⑲', '⑳', 
+# Enclosed CJK Letters and Months Range: 3200–32FF
+'㉑', '㉔', '㉕', '㉖', '㉗', '㉘', '㉙', '㉚', '㉛', '㉝', '㉞', '㊞', '㊱', '㊲', '㊳', '㊴', '㊶', '㊷', '㊸', '㊺', 
+
+'⓵', '⓶', '⓷', '─', '━', '│', '┃', '┌', '┍', '┏', '┓', '└', '┕', '┗', '┛', '├', '┠', '┣', '┤', '┨', '┬', 
+'┯', '┷', '┼', '╂', '╺', '▄', '▢', '▮', '▴', '▵', '▸', '▹', '▻', '◉', '◌', '◪', '◯', '◼', '◽', '◾', 
+'☐', '☑', '⚪', '⚫', '⚬', 
+# Dingbats 0x2700 <= i <= 0x27BF
+'✍', '✐', '✔', '✕', '✥', '✳', '✻', '❊', '❋', '❖', '❙', '❚', '❯', 
+'❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿', '➀', '➁', '➂', '➃', '➄', '➅', '➆', '➇', '➈', '➉', 
+'➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', 
+'➔', '➙', '➜', '➠', '➡', '➢', '➣', '➤', '➥', '➩', '➪', '➭', '➮', '➯', '➲',
+# Miscellaneous Mathematical Symbols-A 0x27C0 <= i <= 0x27EF
+ '⟦', '⟧', 
+# Supplemental Arrows-A Range: 27F0–27FF
+ '⟶', '⟹', '⟺', 
+# Miscellaneous Mathematical Symbols-BRange: 2980–29FF
+'⦁', '⧠', 
+# Miscellaneous Symbols and Arrows Range: 2B00–2BFF
+'⬞', '⭕', 
+# Supplemental Punctuation Range: 2E00–2E7F
+'⸢',
+# CJK Symbols and Punctuation Range: 3000–303F
+'〇', '〖', '〗', '〜', '〮', 
+# Halfwidth and Fullwidth Forms Range: FF00–FFEF
+'￭'}
 non_printable = {'\x00', '\x81', '\x82', '\x87', '\x8c', '\x8d', '\x8e', '\x8f', '\x9e', '\x9f', '\xa0', '\xad', '\u2002', '\u3000', '\ue047', '\ue06d', '\uf000', '\uf06c', '\uf06d', '\uf06f', '\uf071', '\uf076', '\uf077', '\uf081', '\uf082', '\uf09e', '\uf0a0', '\uf0a6', '\uf0c4', '\uf0e0', '\uf0e8', '\uf0e9', '\uf0f0', '\uf0fe', }
-dont_care_icon = {'ࠆ', 'ࠗ', 'ࡐ', 'ࡑ', 'ࡒ', 'ࡓ','❍', '❏', '❐', '❑', '❒', '〫', }
+dont_care_icon = {'ࠆ', 'ࠗ', 'ࡐ', 'ࡑ', 'ࡒ', 'ࡓ','❍', '❏', '❐', '❑', '❒', '〫', '◼', 
+
+}
+dingbat = {'❍', '❏', '❐', '❑', '❒'}
 excluded_chr_set = set()
 
 def draw_bbox(line, draw, rect_coord):
@@ -34,53 +67,60 @@ def is_valid_text(text, pdf_name):
     # unuse_chars = unuse_chars.union(diff)
     # if diff[0] in non_printable:
     #     return False, {}
-    print(diff, hex(ord(diff[0])))
+    for chr in diff:
+        if chr in dingbat:
+            print('dingbat:', chr, hex(ord(chr)))
+        # print(diff, hex(ord(diff[0])))
     print("issue pdf name:", pdf_name)
     # return False, diff
     return True, diff
 
-def pdf_to_jpg(pdf_path, pdf2jpg_option):
-    start = time.time()
-    result = convert_from_path(pdf_path, **pdf2jpg_option)
-    # print(f"convert spent: {time.time() - start}")
-    return result 
-
-def append_label_list(coord, points, crop_list):
-    left, upper, right, lower = coord
+def append_label_list(coor, points, crop_list):
+    left, upper, right, lower = coor
     points.append([[int(left), int(upper)], [int(right), int(upper)], [int(right), int(lower)], [int(left), int(lower)]])
-    crop_list.append(coord)
+    crop_list.append(coor)
 
 def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
     points = []
     crop_list = []
-    print(line.bbox, img_rate)
+    # print(line.bbox, img_rate)
     coor = pdf.cal_coor(line.bbox, img_rate)
     left, upper, right, lower = coor
     line_text = line.get_text().strip()
     while '  ' in line_text:
         line_text = line_text.replace('  ', ' ')
     line_text = txt2valid_range(line_text)
-    print('line:', line_text)
     if crop_line:
         label_text = [line_text]
+        print('crop_line:', label_text)
     else:
-        label_text = line_text.split(' ')
+        label_text = []
+        gt_word = ''
         got_left = False
-        # print('words:', label_text)
+        # data inspecting
+        target_chr = [ '╺',         ]
         for ltchr in line:
-            if ltchr.get_text() == ' ' or ltchr.get_text() in exclude_chr_set.union(dont_care_icon).union(non_printable): # both LTchr and LTAnno have get_text() and can be blank character
+            char = ltchr.get_text()
+            if char not in target_chr:
+            # if char == ' ' or char in sayi_vocab:
+            #  or char in exclude_chr_set.union(dont_care_icon).union(non_printable): # both LTchr and LTAnno have get_text() and can be blank character
                 if got_left:
                     coor = [left, upper, right, lower]
                     append_label_list(coor, points, crop_list)
+                    label_text.append(gt_word)
+                    gt_word = ''
                 got_left = False
-            elif isinstance(ltchr, LTChar) :
+            elif isinstance(ltchr, LTChar) and char in target_chr:
+            # and (char in exclude_chr_set or char in dingbat):
                 space_coor = pdf.cal_coor(ltchr.bbox, img_rate)
                 if not got_left:
                     left = space_coor[0]
                     got_left = True
                 right = space_coor[2]
+                gt_word = f"{gt_word}{char}"
+        label_text.append(gt_word)
         coor = [left, upper, right, lower]
-    # print()
+        # print(label_text, crop_list)
     append_label_list(coor, points, crop_list)
     return label_text, points, crop_list
 
@@ -128,13 +168,10 @@ def crop_pdf_images(
                             is_valid_txt, diff = is_valid_text(text, pdf_name)
                             invalid_chr_set = invalid_chr_set.union(diff)
                             if right - left < 3 or lower - upper < 3: # trash image condition
-                                # print(right - left < 3 , upper - lower < 3 , not is_valid_text(text))
-                                # print(right - left , upper - lower , not is_valid_text(text))
-                                # print('invalid crop')
                                 continue
-                            if not is_valid_txt: # OOV unicode 
+                            if not is_valid_txt or not text: # OOV unicode 
                                 continue
-                            cropped_path = cropped_dir / f'{page_num}_{crop_idx}.jpg'
+                            cropped_path = cropped_dir / f'{page_num}_{crop_idx}_{text}_.jpg'
                             # print(f"{cropped_path}\t{text}")
                             img.crop(crop_coor).save(cropped_path)
                             cropped_labels.append(f'{cropped_path}\t{text}\n')
@@ -163,11 +200,12 @@ def convert_and_crop_pdf_images(directories, pdf2jpg_option, pdf_name,
 
     pdf2jpg_option["output_file"] = pdf_name
     pdf2jpg_option["output_folder"] = converted_dir
+    # img_rate = 1123 / pdf.page_height
     pdf2jpg_option["size"] = (None, pdf.page_height * img_rate)
     converted_list = get_file_list(converted_dir)
     if pdf2image_bool:
         create_directory(converted_dir)
-        converted_list = pdf_to_jpg(pdf_path, pdf2jpg_option)
+        converted_list = convert_from_path(pdf_path, **pdf2jpg_option)
     else:
         converted_list.sort()
     images_size = len(converted_list)
@@ -227,11 +265,14 @@ if __name__ == '__main__':
         'boxed_dir' : 'boxed', # if None not save boxed image
         # 'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
+        # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
         'cropped_dir' : 'cropped', 
+        # 'cropped_dir' : '/mnt/d/cropped', 
         'label_dir': 'labels',
-        # 'pdf_dir': 'pdf/crawled',
+        'pdf_dir': 'pdf/crawled',
+        # 'pdf_dir': 'test_pdf',
         # 'pdf_dir': 'pdf/issue',
-        'pdf_dir': 'pdf',
+        # 'pdf_dir': 'pdf',
     }
     create_directories(directories.values())
 
@@ -962,10 +1003,16 @@ if __name__ == '__main__':
 '2023년 항측(무허가건축물), 광고물관리 공무직 채용계획', 
 '결재문서본문 - 2022-10-14T124301.783', 
 '전작 특화작물 시험포장 전력간선 증설공사 추진']
-    pdf_names = ['test', '2022년(1._7.) 남구 옴부즈만 운영상황 보고']
+    # pdf_names = ['test_font_sizes', ]
+    # pdf_names = [
+    #     # '2022년(1._7.) 남구 옴부즈만 운영상황 보고', 
+    #     '2021년 저소득층 추가 국민지원금 국고보조금 집행잔액 반납', 
+    # ]
+    # inspecting
+    pdf_names = ['본문']
+    pdf_names = list(set(pdf_names))
     print('pdf length', len(pdf_names))
     pdf_names.sort()
-    # pdf_names = ['8_easy', '8_hard']
     det_label_list = []
     rec_label_list = []
     step = pool_count * 2
@@ -977,12 +1024,13 @@ if __name__ == '__main__':
         "use_pdftocairo": True,
         "timeout": 1200, 
         "thread_count": 4,
-        # "last_page" : 1
+        # "last_page" : 1,
     }
     conv_and_crop_opt={
         'pdf2image_bool':True, 
         'crop_line_bool':False,
-        'img_rate':10
+        # 1654 x 2339 200dpi
+        'img_rate': 2339 / 841
     }
     # katakana middle dot 0xff65
     # middle dot 0x00b7
@@ -995,4 +1043,6 @@ if __name__ == '__main__':
         det_label_list.append(det_label)
     write_label(directories['label_dir'], rec_label_list, 'rec_banila_train')
     write_label(directories['label_dir'], det_label_list, 'det_train')
+    with tarfile.open('pdf_cropped.tar.gz', 'w:gz') as test_tar:
+        test_tar.add(directories['cropped_dir'])
     print("excluded_chr_set:", sorted(excluded_chr_set))
