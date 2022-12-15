@@ -7,6 +7,8 @@ from support_unicode_dict import *
 exclude_unicodes_list = []
 for v in exclude_unicodes.values():
     exclude_unicodes_list += v
+for conv_dict in similar_dict_list:
+    exclude_unicodes_list += list(conv_dict.keys())
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', 'GNGT(견고딕).ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
 human_empty_glyph_list = [8361]
 hyhead_empty_glyph_list = [96]
@@ -20,6 +22,34 @@ ttf_exclude_glyph = {
     "Gungsuh": [],
     "Batang": [],
     "Gulim": []
+}
+
+won_dict = {
+    "휴먼명조": {
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
+    "hy헤드라인m": {
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
+    "견고딕": {
+        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+    },
+    "Dotum": {
+        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
+    "Gungsuh": {
+        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
+    "Batang": {
+        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
+    "Gulim": {
+        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    },
 }
 
 def createDirectory(directory):
@@ -58,8 +88,8 @@ def make_fonts_dataset(font_path_list, font_sizes, mode):
         font_name = font_path[:-4]
         print("support size: ", len(support_chars))
         if encoding.startswith("utf"):
-            tmp = [e[0] for e in support_chars]
-            korean_dict = korean_dict.union(tmp)
+            code_list = [e[0] for e in support_chars]
+            korean_dict = korean_dict.union(code_list)
             print("dict_size: ", len(korean_dict))
         if support_chars:
             for font_size in font_sizes:
@@ -110,6 +140,9 @@ def get_ttf_support_chars(font_path):
         encoding = cmap.getEncoding()
         # print(dir(cmap))
         # print(cmap.isUnicode(), encoding)
+        # print(encoding)
+        # print(cmap.platformID)
+        # print(cmap.platEncID)
         for i in cmap.cmap.keys():
             uni_chr = chr(i)
             if is_valid_decimal(font_name, i):
@@ -123,8 +156,8 @@ def get_ttf_support_chars(font_path):
     return False, ''
 
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', 'GNGT(견고딕).ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
-# font_path_list = ['Batang.ttf']
-font_sizes = [8, 10, 11, 13, 14, 16, 20]
-# font_sizes = [100]
+font_path_list = ['Dotum.ttf']
+# font_sizes = [8, 10, 11, 13, 14, 16, 20]
+font_sizes = [24]
 label_lines = make_fonts_dataset(font_path_list, font_sizes, 'train')
 write_label_file(label_lines)
