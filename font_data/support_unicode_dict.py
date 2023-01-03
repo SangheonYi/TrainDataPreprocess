@@ -58,7 +58,7 @@ exclude_unicodes = {
     # Currency_Symbols 0x20A0, 0x20CF
 
     # Letterlike_Symbols 0x2100, 0x214F
-
+    "Letterlike_Symbols": [0x02126, 0x212e],
     # Number_Forms 0x2150, 0x218F 
     "Number_Forms": r2l(0x216c, 0x216f) + r2l(0x217c, 0x217f),
     # Arrows 0x2190, 0x21FF 
@@ -395,7 +395,7 @@ middledot_dict = {
     0xff65: 0x00b7, # ･ · specials katakana middle dot 
 }
 
-ascii_to_half_full = {0xff00 + ascii_code - 32:ascii_code for ascii_code in range(33, 127)}
+half_full_to_ascii = {0xff00 + ascii_code - 32:ascii_code for ascii_code in range(33, 127)}
 
 empty_circle = {
     # ○ Geometric Shapes white circle 0x25cb
@@ -409,11 +409,13 @@ empty_circle = {
     0x26AC: 0x25e6, # ⚬ ◦ Miscellaneous Symbols Medium Small White Circle
 }
 
-cjk_half_punctu = {
+cjk_punctu = {
     0xff61: 0x3002, # ｡ 。 Halfwidth and Fullwidth Forms Halfwidth Ideographic Full Stop 하단 위치
-    0xff62:0x300c, # ｢ 「
-    0xff63:0x300d, # ｣ 」
-    0xff64:0x3001, # ､ 、
+    0xff62: 0x300c, # ｢ 「
+    0xff63: 0x300d, # ｣ 」
+    0xff64: 0x3001, # ､ 、
+    0x3008: 0x003c, # 〈 < CJK Symbols and Punctuation Left Angle Bracket
+    0x3009: 0x003e, # 〉 > CJK Symbols and Punctuation Right Angle Bracket
 }
 
 right_triangle = {
@@ -457,9 +459,9 @@ tilde = {
 similar_dict_list = [
     cjk_comp_ideo_to_unif_dict, 
     middledot_dict, 
-    ascii_to_half_full, 
+    half_full_to_ascii, 
     empty_circle, 
-    cjk_half_punctu, 
+    cjk_punctu, 
     right_triangle, 
     empty_square, 
     black_squre, 

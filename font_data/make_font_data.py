@@ -3,6 +3,7 @@ from fontTools.ttLib import TTFont
 import os
 import struct
 from support_unicode_dict import *
+import random
 
 exclude_unicodes_list = []
 for v in exclude_unicodes.values():
@@ -61,7 +62,7 @@ def createDirectory(directory):
         print("Error: Failed to create the directory.")
         return False
 
-def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10):
+def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10, idx=None):
     # Image size
     W = int(font_size * 1.2)
     H = W
@@ -76,7 +77,10 @@ def make_font_data(text_to_draw, font_path, encoding, save_dir, font_size=10):
     # draw text_to_draw on image
     draw.text(position_xy, text_to_draw, font=font, fill="black")
     # save image
-    save_path = f'{save_dir}/{ord(text_to_draw)}.jpg'
+    if isinstance(idx, int):
+        save_path = f'{save_dir}/{idx}_{ord(text_to_draw)}.jpg'
+    else:
+        save_path = f'{save_dir}/{ord(text_to_draw)}.jpg'
     image.save(save_path)
     return save_path
 
@@ -88,16 +92,19 @@ def make_fonts_dataset(font_path_list, font_sizes, mode):
         font_name = font_path[:-4]
         print("support size: ", len(support_chars))
         if encoding.startswith("utf"):
-            code_list = [e[0] for e in support_chars]
-            korean_dict = korean_dict.union(code_list)
+            korean_dict = korean_dict.union(support_chars)
             print("dict_size: ", len(korean_dict))
         if support_chars:
             for font_size in font_sizes:
                 save_dir = f'kor_rec/{mode}{font_name}_{font_size}_data'
                 if createDirectory(save_dir):
-                    for c, label in support_chars:
-                        image_path = make_font_data(c, font_path, encoding, save_dir, font_size=font_size)
-                        label_lines.append(f"{image_path}\t{label}\n")
+                    for idx, support_char in enumerate(support_chars):
+                        image_path = make_font_data(support_char, font_path, encoding, save_dir, font_size=font_size, idx=idx)
+                        unicode_label = get_encoded_chr(ord(support_char), encoding)
+                        if unicode_label in won_dict[font_name].keys():
+                            print(f"font: {font_name}, unicode: {unicode_label}, won_dict: {won_dict[font_name]}")
+                            unicode_label = won_dict[font_name][unicode_label]
+                        label_lines.append(f"{image_path}\t{support_char}\n")
         else:
             print(f"{font_path} is empty")
     with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
@@ -113,6 +120,8 @@ def write_label_file(label_lines):
 def get_encoded_chr(i, encoding):
     if not encoding.startswith("utf") and i > 127:
         # euckr encoding
+        # struct는 c언어에서 사용하는 타입의 binary 데이터와 호환할 때 사용한다.
+        # H: unsigned short 2 bytes, >: big endian
         return struct.pack('>H', i).decode(encoding)
     return chr(i)
 
@@ -146,18 +155,17 @@ def get_ttf_support_chars(font_path):
         for i in cmap.cmap.keys():
             uni_chr = chr(i)
             if is_valid_decimal(font_name, i):
-                try:
-                    support_char = (uni_chr, get_encoded_chr(i, encoding))
-                    support_chars.append(support_char)
+                try:                    
+                    support_chars.append(uni_chr)
                 except:
                     print(f"decimal {i} can't be encoded by {encoding}")
         if support_chars:
             return support_chars, encoding
     return False, ''
 
-font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', 'GNGT(견고딕).ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
-font_path_list = ['Dotum.ttf']
-# font_sizes = [8, 10, 11, 13, 14, 16, 20]
-font_sizes = [24]
+font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
+# font_path_list = ['Dotum.ttf']
+font_sizes = [8, 14,]
+# font_sizes = [24]
 label_lines = make_fonts_dataset(font_path_list, font_sizes, 'train')
 write_label_file(label_lines)
