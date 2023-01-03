@@ -1,0 +1,1 @@
+rm -rf datasets/train_gts/* datasets/train_images/*
