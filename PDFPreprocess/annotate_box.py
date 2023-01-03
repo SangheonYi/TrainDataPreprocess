@@ -173,8 +173,8 @@ def crop_pdf_images(
                                 continue
                             if not is_valid_txt or not text: # OOV unicode 
                                 continue
-                            cropped_path = cropped_dir / f'{page_num}_{crop_idx}_{text}_.jpg'
-                            # print(f"{cropped_path}\t{text}")
+                            cropped_path = cropped_dir / f'{page_num}_{crop_idx}_.jpg'
+                            print(f"{cropped_path}\t&&{text}&&")
                             img.crop(crop_coor).save(cropped_path)
                             cropped_labels.append(f'{cropped_path}\t{text}\n')
                             # page_det_labels.append({"transcription": "label_text", "points": bbox_label})
@@ -265,16 +265,17 @@ if __name__ == '__main__':
     # pdf_names += [f'wind{pdf_index}' for pdf_index in range(10)]
     directories = {
         'pdf_converted_dir' : 'converted', 
-        'boxed_dir' : 'boxed', # if None not save boxed image
-        # 'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
+        # 'boxed_dir' : 'boxed', # if None not save boxed image
+        'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
+        # 'cropped_dir' : 'pdf/cropped', 
         'cropped_dir' : 'pdf/issue/cropped', 
         # 'cropped_dir' : '/mnt/d/cropped', 
         'label_dir': 'labels',
-        'pdf_dir': 'pdf/',
+        # 'pdf_dir': 'pdf/crawled',
         # 'pdf_dir': 'test_pdf',
-        # 'pdf_dir': 'pdf/issue',
+        'pdf_dir': 'pdf/issue',
         # 'pdf_dir': 'pdf',
     }
     create_directories(directories.values())
