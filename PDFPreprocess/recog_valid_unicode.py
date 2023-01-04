@@ -296,7 +296,6 @@ exclude_greek = {# Greek and Coptic
     chr(0x03bf): chr(0x006f), # ο o GREEK SMALL LETTER OMICRON
 }
 
-
 middledot_dict = {
     chr(0x0387): chr(0x00b7), # · · Greek and Coptic Greek Ano Teleia
     chr(0x119E): chr(0x00b7), # ᆞ· hangul jamo 아래 아 
@@ -331,32 +330,34 @@ empty_circle = {
 }
 
 cjk_punctu = {
-    0xff61: 0x3002, # ｡ 。 Halfwidth and Fullwidth Forms Halfwidth Ideographic Full Stop 하단 위치
-    0xff62: 0x300c, # ｢ 「
-    0xff63: 0x300d, # ｣ 」
-    0xff64: 0x3001, # ､ 、
-    0x3008: 0x003c, # 〈 < CJK Symbols and Punctuation Left Angle Bracket
-    0x3009: 0x003e, # 〉 > CJK Symbols and Punctuation Right Angle Bracket
+    chr(0xff61): chr(0x3002), # ｡ 。 Halfwidth and Fullwidth Forms Halfwidth Ideographic Full Stop 하단 위치
+    chr(0xff62): chr(0x300c), # ｢ 「
+    chr(0xff63): chr(0x300d), # ｣ 」
+    chr(0xff64): chr(0x3001), # ､ 、
+    chr(0x3008): chr(0x003c), # 〈 < CJK Symbols and Punctuation Left Angle Bracket
+    chr(0x3009): chr(0x003e), # 〉 > CJK Symbols and Punctuation Right Angle Bracket
 }
 
 right_triangle = {
-    chr(0x25B8):chr(0x2023), # ▸ ‣ Geometric Shapes Black Right-Pointing Small Triangle
+    chr(0x2023):chr(0x25B6), # ‣ ▶ General Punctuation Triangular Bullet
+    chr(0x25B8):chr(0x25B6), # ▸ ▶ Geometric Shapes Black Right-Pointing Small Triangle
 }
 
-empty_square = {
-    chr(0x2610):chr(0x25A2), # ☐ ▢ Miscellaneous Symbols Ballot Box
+white_square = {
+    chr(0x25A2):chr(0x25A1), # ▢ □ Geometric Shapes White Square with Rounded Corners
+    chr(0x2610):chr(0x25A1), # ☐ □ Miscellaneous Symbols Ballot Box
 }
 
 black_squre = { # end of proof
-    chr(0x25ae):chr(0x220e), # ▮ ∎ Geometric Shapes Black Vertical Rectangle
-    chr(0x25fc):chr(0x220e), # ◼ ∎ Geometric Shapes Black Medium Square
-    chr(0x25fe):chr(0x220e), # ◾ ∎ Geometric Shapes Black Medium Small Square
+    chr(0x220e):chr(0x25a0), # ∎ ■ Mathematical Operators End of Proof
+    chr(0x25ae):chr(0x25a0), # ▮ ■ Geometric Shapes Black Vertical Rectangle
+    chr(0x25fc):chr(0x25a0), # ◼ ■ Geometric Shapes Black Medium Square
+    chr(0x25fe):chr(0x25a0), # ◾ ■ Geometric Shapes Black Medium Small Square
 }
 
 dingbats_to_enclosed = { chr(encl + 800) : chr(encl) for encl in range(0x2460, 0x246A)}
 
 dingbats_negative_circled = { chr(neg_circ + 20) : chr(neg_circ) for neg_circ in range(0x2776, 0x2780)}
-
 dingbats_to_arrows = {
     chr(0x2794):chr(0x2192), # ➔ → Dingbats Heavy Wide-Headed Rightwards Arrow
     chr(0x279c):chr(0x2192), # ➜ → Dingbats Heavy Round-Tipped Rightwards Arrow
@@ -377,7 +378,7 @@ tilde = {
     chr(0x301C):chr(0x007E), # 〜 ~ CJK Symbols and Punctuation Operators Wave Dash
 }
 
-dont_care = {'ʱ', '˯', 'Ϛ', '⭕', 'ʵ', '〮', '⸱', '˻', 'ʳ', 'ʴ', 'ʶ', '▄', '\\', 'ʲ', '⸢', '˪'}
+dont_care = {'ʱ', '˯', 'Ϛ', '⭕', 'ʵ', '〮', '⸱', '˻', 'ʳ', 'ʴ', 'ʶ', '▄', 'ʲ', '⸢', '˪'}
 need_pdf_check = {'▢', '〜', '❖', '◯', '￭', 'ʼ'}
 wrong_glyph = {
     '\\': ['2022년 누리과정 보육료 예탁금 지급(3차)', '결재문서본문 - 2022-10-04T151340.124', '결재문서본문 - 2022-10-18T193020.376', '2022년 동부권역 소규모 하천정비사업(3회추경) 실시설계용역 시행', '결재문서본문 - 2022-10-18T115325.780', '2022년 저수지 퇴적토 준설사업 실시설계용역 시행', '보육교사 건강장해 예방 매뉴얼 개발에 따른 외부 집필진 계약 체결', '결재문서본문 - 2022-10-04T175447.825', '결재문서본문 - 2022-09-30T124520.630', '결재문서본문 - 2022-10-01T074405.367', '결재문서본문 - 2022-10-04T160809.506', '2022년 경로당 정부양곡비 지급(9월)', '도곡온천지구 활성화 방안 용역 시행', '결재문서본문 - 2022-10-04T161507.850', '2022년 서부권역 소규모 하천정비사업(3회추경) 실시설계용역 시행'],
@@ -520,7 +521,7 @@ convert_dict_list = [
     empty_circle, 
     cjk_punctu, 
     right_triangle, 
-    empty_square, 
+    white_square, 
     black_squre, 
     dingbats_to_enclosed, 
     dingbats_negative_circled, 
@@ -543,11 +544,38 @@ if __name__ == '__main__':
     with open('../font_data/korean_dict.txt', 'r', encoding='utf-8') as sayi_dict:
         sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
     
-    for convert_dict in convert_dict_list:
-        print('key inter:', sayi_vocab.intersection(set(convert_dict.keys())))
-        
-    for k, v in dingbats_negative_circled.items():
-        print(k, v, hex(ord(k)), hex(ord(v)))
-    for k, v in dingbats_to_enclosed.items():
-        print(k, v, hex(ord(k)), hex(ord(v)))
-    print('한글')
+    for i, convert_dict in enumerate(convert_dict_list):
+        print(f'{i}th diff val:', set(convert_dict.values()) - sayi_vocab)
+    non_printable = {'\x00', '\x81', '\x82', '\x87', '\x8c', '\x8d', '\x8e', '\x8f', '\x9e', '\x9f', '\xa0', '\xad', '\u2002', '\u3000', '\ue047', '\ue06d', '\uf000', '\uf06c', '\uf06d', '\uf06f', '\uf071', '\uf076', '\uf077', '\uf081', '\uf082', '\uf09e', '\uf0a0', '\uf0a6', '\uf0c4', '\uf0e0', '\uf0e8', '\uf0e9', '\uf0f0', '\uf0fe', }
+    dont_care_icon = {'ࠆ', 'ࠗ', 'ࡐ', 'ࡑ', 'ࡒ', 'ࡓ','❍', '❏', '❐', '❑', '❒', '〫', '◼'}
+    dingbat = {'❍', '❏', '❐', '❑', '❒'}    
+    exclude_chr_set = {'\\', '²', '³', '¹', 'ʱ', 'ʲ', 'ʳ', 'ʴ', 'ʵ', 'ʶ', 'ʼ', '˅', 'ˇ', 'ː', '˝', '˪', '˯', 
+    '˹', '˻',  '́', '̇', '͠', 'ʹ', 'Ϛ',  'ᄒ', 'ᆫ', '‣', '⁃', '⁋', '₃', '⃝', '⃞', '↳', '⇀', '⇄', '⇐', '⇓', '⇛', 
+    '⇦', '⇨', '⇩', '∎', '∘', '≼', '≽', '⋅', '⋗', '⋯', '⌌', '⌎', '⌜', '⌟', 
+
+    '⑯', '⑰', '⑱', '⑲', '⑳', 
+    # Enclosed CJK Letters and Months Range: 3200–32FF
+    '㉑', '㉔', '㉕', '㉖', '㉗', '㉘', '㉙', '㉚', '㉛', '㉝', '㉞', '㊞', '㊱', '㊲', '㊳', '㊴', '㊶', '㊷', '㊸', '㊺', 
+
+    '⓵', '⓶', '⓷', '─', '━', '│', '┃', '┌', '┍', '┏', '┓', '└', '┕', '┗', '┛', '├', '┠', '┣', '┤', '┨', '┬', 
+    '┯', '┷', '┼', '╂', '╺', '▄', '▢', '▮', '▴', '▵', '▸', '▹', '▻', '◉', '◌', '◪', '◯', '◼', '◽', '◾', 
+    '☐', '☑', '⚪', '⚫', '⚬', 
+    # Dingbats 0x2700 <= i <= 0x27BF
+    '✍', '✐', '✔', '✕', '✥', '✳', '✻', '❊', '❋', '❖', '❙', '❚', '❯', 
+    '❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿', '➀', '➁', '➂', '➃', '➄', '➅', '➆', '➇', '➈', '➉', 
+    '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', 
+    '➔', '➙', '➜', '➠', '➡', '➢', '➣', '➤', '➥', '➩', '➪', '➭', '➮', '➯', '➲',
+    # Miscellaneous Mathematical Symbols-A 0x27C0 <= i <= 0x27EF
+    '⟦', '⟧', 
+    # Supplemental Arrows-A Range: 27F0–27FF
+    '⟶', '⟹', '⟺', 
+    # Miscellaneous Mathematical Symbols-BRange: 2980–29FF
+    '⦁', '⧠', 
+    # Miscellaneous Symbols and Arrows Range: 2B00–2BFF
+    '⬞', '⭕', 
+    # Supplemental Punctuation Range: 2E00–2E7F
+    '⸢',
+    # CJK Symbols and Punctuation Range: 3000–303F
+    '〇', '〖', '〗', '〜', '〮', 
+    # Halfwidth and Fullwidth Forms Range: FF00–FFEF
+    '￭'}
