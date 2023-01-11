@@ -23,44 +23,51 @@ def draw_bbox(line, draw, rect_coord):
     # draw.text(rect_coord[0], f'{text[:-1]}', font=ImageFont.truetype("font/Batang.ttf", size=20), fill="dodgerblue")
     return 
 
-def is_valid_text(text, pdf_name):
+def get_OOV(text):
     # global unuse_chars
     # unuse_chars
     # return be true when set(text) - sayi_vocab is empty set
-    diff = list(set(text) - sayi_vocab)
-    return not diff, diff
+    oov_set = list(set(text) - sayi_vocab)
+    return oov_set
 
-def append_label_list(coor, points, crop_list):
+def append_label_list(coor, points, crop_list, gt_word, gt_list):
+    invalid_chr_set = set()
     left, upper, right, lower = coor
+    if right - left < 3 or lower - upper < 3: # trash image condition
+        return invalid_chr_set
+    oov_set = get_OOV(gt_word)
+    invalid_chr_set = invalid_chr_set.union(oov_set)
+    if oov_set or not gt_word: # OOV unicode 
+        return invalid_chr_set
     points.append([[int(left), int(upper)], [int(right), int(upper)], [int(right), int(lower)], [int(left), int(lower)]])
     crop_list.append(coor)
+    gt_list.append(gt_word)
+    return invalid_chr_set
 
 def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
     points = []
     crop_list = []
     # print(line.bbox, img_rate)
     coor = pdf.cal_coor(line.bbox, img_rate)
-    left, upper, right, lower = coor
     line_text = line.get_text().strip()
     while '  ' in line_text:
         line_text = line_text.replace('  ', ' ')
     line_text = txt2valid_range(line_text)
     if crop_line:
         label_text = [line_text]
-        print('crop_line:', label_text)
     else:
         label_text = []
         gt_word = ''
         got_left = False
+        left, upper, right, lower = coor
         # data inspecting
         for ltchr in line:
             char = ltchr.get_text()
             # if char not in target_chr:
-            if char == ' ': # both LTchr and LTAnno have get_text() and can be blank character
+            if char == ' ' or char not in sayi_vocab: # both LTchr and LTAnno have get_text() and can be blank character
                 if got_left:
                     coor = [left, upper, right, lower]
-                    append_label_list(coor, points, crop_list)
-                    label_text.append(gt_word)
+                    invalid_chr_set = append_label_list(coor, points, crop_list, gt_word, label_text)
                     gt_word = ''
                 got_left = False
             elif isinstance(ltchr, LTChar) :
@@ -70,11 +77,10 @@ def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
                     got_left = True
                 right = space_coor[2]
                 gt_word = f"{gt_word}{char}"
-        label_text.append(gt_word)
         coor = [left, upper, right, lower]
         # print(label_text, crop_list)
-    append_label_list(coor, points, crop_list)
-    return label_text, points, crop_list
+    invalid_chr_set = append_label_list(coor, points, crop_list, gt_word, label_text)
+    return label_text, points, crop_list, invalid_chr_set
 
 def crop_pdf_images(
     zipped_arg=None,
@@ -87,7 +93,6 @@ def crop_pdf_images(
     total=0,
     crop_line=False, 
     img_rate=1,
-    pdf_idx=-1
 ):
     invalid_chr_set = set()
     cropped_labels = []
@@ -116,27 +121,19 @@ def crop_pdf_images(
             if isinstance(lobj, LTTextBoxHorizontal) :
                 for line in lobj:
                     if isinstance(line, LTTextLineHorizontal):
-                        label_text, points, crop_list = parse_labels(crop_line, line, pdf, img_rate)
+                        label_text, points, crop_list, invalid_chr_set = parse_labels(crop_line, line, pdf, img_rate)
                         for text, bbox_label, crop_coor in zip(label_text, points, crop_list):
                             left, upper, right, lower = crop_coor
-                            is_valid_txt, diff = is_valid_text(text, pdf_name)
-                            invalid_chr_set = invalid_chr_set.union(diff)
-                            if right - left < 3 or lower - upper < 3: # trash image condition
-                                continue
-                            if not is_valid_txt or not text: # OOV unicode 
-                                continue
-                            pdf_id_list = [chr(ord(name_chr)) for name_chr in pdf_name]
-                            pdf_id = '-'.join(pdf_id_list)
                             cropped_path = cropped_dir / f'{page_num}_{crop_idx}_.jpg'
                             # cropped_path = f'/home/sayi/workspace/OCR/PaddleOCR/sayi/resource/pdf_dataset/{pdf_id}_{page_num}_{crop_idx}_.jpg'
                             print(f"{cropped_path}\t{text}")
                             img.crop(crop_coor).save(cropped_path)
                             cropped_labels.append(f'{cropped_path}\t{text}\n')
-                            page_det_labels.append({"transcription": text, "points": bbox_label})
+                            # page_det_labels.append({"transcription": text, "points": bbox_label})
                             if boxed_dir:
                                 draw_bbox(line, draw, ((left, lower), (right, upper)))
                             crop_idx += 1
-        det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
+        # det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         if boxed_dir:
             boxed_path = boxed_dir / Path(image_path).name
             draw_img.save(boxed_path, "JPEG")
@@ -145,7 +142,7 @@ def crop_pdf_images(
     # write_label(directories['label_dir'], det_labels, f'det_{pdf_name}')
     return ''.join(det_labels), ''.join(cropped_labels), invalid_chr_set
 
-def convert_and_crop_pdf_images(directories, pdf2jpg_option, pdf_name, pdf_idx,
+def convert_and_crop_pdf_images(directories, pdf2jpg_option, pdf_name,
     pdf2image_bool=True, 
     crop_line_bool=False,
     img_rate=1
@@ -172,7 +169,6 @@ def convert_and_crop_pdf_images(directories, pdf2jpg_option, pdf_name, pdf_idx,
         "total": images_size,
         "zipped_arg": zip(pdf.pages, converted_list, range(images_size)),
         "img_rate": img_rate,
-        "pdf_idx": pdf_idx
     }
     # print('cropping')
     det_label, rec_label, invalid_chr_set = crop_pdf_images(**crop_arg)
@@ -193,7 +189,7 @@ def batch_convert_pdf2crop(pool_count, pdf_names, pdf2jpg_option,
         'pdf_dir' : 'corpus_pdf'
     }):
     pool = Pool(pool_count)
-    results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(directories, pdf2jpg_option, pdf_name, pdf_idx), kwds=conv_and_crop_opt) for pdf_idx, pdf_name in enumerate(pdf_names)}
+    results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(directories, pdf2jpg_option, pdf_name), kwds=conv_and_crop_opt) for pdf_name in pdf_names}
     pool.close()
     pool.join()
     rec_label_list = []
@@ -219,16 +215,16 @@ if __name__ == '__main__':
     # pdf_names += [f'wind{pdf_index}' for pdf_index in range(10)]
     directories = {
         'pdf_converted_dir' : 'converted', 
-        'boxed_dir' : 'boxed', # if None not save boxed image
-        # 'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
+        # 'boxed_dir' : 'boxed', # if None not save boxed image
+        'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
-        'cropped_dir' : 'cropped', 
-        # 'cropped_dir' : 'pdf/issue/cropped', 
+        # 'cropped_dir' : 'cropped', 
+        'cropped_dir' : 'pdf/issue/cropped', 
         # 'cropped_dir' : '/mnt/d/cropped', 
         'label_dir': 'labels',
-        'pdf_dir': 'pdf/crawled',
+        # 'pdf_dir': 'pdf/crawled',
         # 'pdf_dir': 'test_pdf',
-        # 'pdf_dir': 'pdf/issue',
+        'pdf_dir': 'pdf/issue',
         # 'pdf_dir': 'pdf',
     }
     create_directories(directories.values())
@@ -971,13 +967,13 @@ if __name__ == '__main__':
         "fmt": "jpg",
         # "single_file": True,
         "paths_only": True,
-        "use_pdftocairo": True,
+        "use_pdftocairo": False,
         "timeout": 1200, 
         "thread_count": 4,
         # "last_page" : 1,
     }
     conv_and_crop_opt={
-        'pdf2image_bool':False, 
+        'pdf2image_bool':True, 
         'crop_line_bool':False,
         # 1654 x 2339 200dpi
         'img_rate': 2339 / 841
