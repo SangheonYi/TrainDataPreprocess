@@ -1,3 +1,6 @@
+# update sayi_dict with pdf char set 
+# convert back slash with currency won
+
 cjk_comp_ideo_to_unif_dict = {
     chr(0xf900): chr(0x8c48),
     chr(0xf901): chr(0x66f4),
