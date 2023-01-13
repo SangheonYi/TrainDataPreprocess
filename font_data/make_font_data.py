@@ -165,7 +165,7 @@ def get_ttf_support_chars(font_path):
 
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
 # font_path_list = ['Dotum.ttf']
-font_sizes = [8, 14,]
-# font_sizes = [24]
+# font_sizes = [8, 14,]
+font_sizes = [24]
 label_lines = make_fonts_dataset(font_path_list, font_sizes, 'train')
 write_label_file(label_lines)

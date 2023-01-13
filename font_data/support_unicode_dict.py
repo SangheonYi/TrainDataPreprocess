@@ -104,10 +104,10 @@ exclude_unicodes = {
 
 }
 
-partial_include = {
+partial_include = [
     # General_Punctuation 0x2000, 0x206F
-    "General_Punctuation": [0x2030, 0x2031, 0x203B, 0x204B], 
-}
+    0x2030, 0x2031, 0x203B, 0x204B
+]
 
 # convert dict
 cjk_comp_ideo_to_unif_dict = {
