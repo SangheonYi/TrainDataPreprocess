@@ -4,7 +4,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 
 class PDFForTrainData():
-    def __init__(self, pdf_path, img_rate) -> None:
+    def __init__(self, pdf_path) -> None:
         # pdf init
         self.fp = open(pdf_path, 'rb')
         self.rsrcmgr = PDFResourceManager()
@@ -12,9 +12,7 @@ class PDFForTrainData():
         self.device = PDFPageAggregator(self.rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(self.rsrcmgr, self.device)
         self.pages = PDFPage.get_pages(self.fp, check_extractable=True)
-        meta_page = next(PDFPage.get_pages(self.fp, check_extractable=True, maxpages=1))
-        self.page_width, self.page_height = meta_page.mediabox[-2:]
-        self.img_rate = img_rate
+        self.current_page = None
 
     def cal_coor(self, bbox, img_rate):
         # image size에 맞게 bbox 비율 고려해야 함
@@ -22,9 +20,16 @@ class PDFForTrainData():
         left, lower, right, upper = bbox
         # pdf의 영점은 좌측 하단 != 이미지의 영점은 좌측 상단
         # 영점조절 (lower-left, upper-right)
-        upper = self.page_height * img_rate - upper
-        lower = self.page_height * img_rate - lower
-        margin = (lower - upper) * 0.025
-        return [left - margin, upper - margin * 6, right + margin, lower + margin]
+        page_height = self.current_page.mediabox[-1]
+        upper = page_height * img_rate - upper
+        lower = page_height * img_rate - lower
+        # margin = (lower - upper) * 0.025
+        # return [left - margin, upper - margin * 6, right + margin, lower + margin]
+        return [left, upper, right, lower]
         # return [left - margin, upper - (margin) * 3, right + margin, lower + margin]
         # left, lower, right, top
+
+    def get_pdf_aggregator_result(self, page):
+        self.current_page = page
+        self.interpreter.process_page(page)
+        return self.device.get_result()

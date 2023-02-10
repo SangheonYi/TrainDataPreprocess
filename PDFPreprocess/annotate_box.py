@@ -3,10 +3,8 @@ from pdfminer.layout import LTTextBoxHorizontal, LTTextLineHorizontal, LTChar, L
 from pdf2image import convert_from_path
 from PDFForTrainData import PDFForTrainData
 from tqdm import tqdm
-import time 
 from util.util import create_directories, create_directory, get_file_list, is_valid_rec_list
 from multiprocessing import Pool
-from os import cpu_count
 import os
 from pathlib import Path
 import json
@@ -91,13 +89,11 @@ def crop_pdf_images(
         'cropped_dir': 'cropped'
     },
     total=0,
-    crop_line=False, 
-    img_rate=1,
+    crop_line=False
 ):
     invalid_chr_set = set()
     cropped_labels = []
     det_labels = []
-    page_det_labels = []
     if directories['boxed_dir']:
         boxed_dir = Path(directories['boxed_dir']) / pdf_name
     else:
@@ -106,18 +102,16 @@ def crop_pdf_images(
     create_directory(boxed_dir)
     create_directory(cropped_dir)
     for page, image_path, page_num in tqdm(zipped_arg, total=total):
-        page_width, page_height = page.mediabox[-2:]
-        if page_width > page_height:
-            continue
-        pdf.interpreter.process_page(page)
+        page_det_labels = []
         # open img
         img = Image.open(image_path).convert("RGB")
         # draw bbox feature is commented
         if boxed_dir:
             draw_img = img.copy()
             draw = ImageDraw.Draw(draw_img)
+        img_rate = img.height / page.mediabox[-1] # img_heigh / page_height
         crop_idx = 0
-        for lobj in pdf.device.get_result():
+        for lobj in pdf.get_pdf_aggregator_result(page):
             if isinstance(lobj, LTTextBoxHorizontal) :
                 for line in lobj:
                     if isinstance(line, LTTextLineHorizontal):
@@ -126,17 +120,17 @@ def crop_pdf_images(
                             left, upper, right, lower = crop_coor
                             cropped_path = cropped_dir / f'{page_num}_{crop_idx}_.png'
                             # cropped_path = f'/home/sayi/workspace/OCR/PaddleOCR/sayi/resource/pdf_dataset/{pdf_id}_{page_num}_{crop_idx}_.png'
-                            print(f"{cropped_path}\t{text}")
-                            # img.crop(crop_coor).save(cropped_path)
+                            # print(f"{cropped_path}\t{text}")
+                            img.crop(crop_coor).save(cropped_path)
                             cropped_labels.append(f'{cropped_path}\t{text}\n')
-                            # page_det_labels.append({"transcription": text, "points": bbox_label})
+                            page_det_labels.append({"transcription": text, "points": bbox_label})
                             if boxed_dir:
                                 draw_bbox(line, draw, ((left, lower), (right, upper)))
                             crop_idx += 1
-        # det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
+        det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         if boxed_dir:
             boxed_path = boxed_dir / Path(image_path).name
-            # draw_img.save(boxed_path, "JPEG")
+            draw_img.save(boxed_path, "JPEG")
         img.close()
     # write_label(directories['label_dir'], cropped_labels, f'rec_{pdf_name}')
     # write_label(directories['label_dir'], det_labels, f'det_{pdf_name}')
@@ -145,15 +139,14 @@ def crop_pdf_images(
 def convert_and_crop_pdf_images(directories, pdf2img_option, pdf_name,
     pdf2image_bool=True, 
     crop_line_bool=False,
-    img_rate=1
     ):
     pdf_path = f"{directories['pdf_dir']}/{pdf_name}.pdf"
-    pdf = PDFForTrainData(pdf_path, img_rate)
+    pdf = PDFForTrainData(pdf_path)
     converted_dir = Path(directories['pdf_converted_dir']) / pdf_name
 
     pdf2img_option["output_file"] = pdf_name
     pdf2img_option["output_folder"] = converted_dir
-    pdf2img_option["size"] = (None, pdf.page_height * img_rate)
+    # pdf2img_option["size"] = (None, pdf.page_height * img_rate) # preserve aspect ratio with pdf.page_height * img_rate pixels height
     converted_list = get_file_list(converted_dir)
     if pdf2image_bool:
         create_directory(converted_dir)
@@ -168,7 +161,6 @@ def convert_and_crop_pdf_images(directories, pdf2img_option, pdf_name,
         "crop_line": crop_line_bool,
         "total": images_size,
         "zipped_arg": zip(pdf.pages, converted_list, range(images_size)),
-        "img_rate": img_rate,
     }
     # print('cropping')
     det_label, rec_label, invalid_chr_set = crop_pdf_images(**crop_arg)
@@ -179,7 +171,6 @@ def batch_convert_pdf2crop(pool_count, pdf_names, pdf2img_option,
     conv_and_crop_opt={
         'pdf2image_bool':False, 
         'crop_line_bool':False,
-        'img_rate':1
     },
     directories = {
         'pdf_converted_dir' : 'converted', 
@@ -215,16 +206,17 @@ if __name__ == '__main__':
     # pdf_names += [f'wind{pdf_index}' for pdf_index in range(10)]
     directories = {
         'pdf_converted_dir' : 'converted', 
-        'boxed_dir' : 'boxed', # if None not save boxed image
-        # 'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
+        # 'boxed_dir' : 'boxed', # if None not save boxed image
+        'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
-        'cropped_dir' : 'cropped', 
-        # 'cropped_dir' : 'pdf/issue/cropped', 
+        # 'cropped_dir' : 'cropped', 
+        'cropped_dir' : 'pdf/issue/cropped', 
         # 'cropped_dir' : '/mnt/d/cropped', 
         'label_dir': 'labels',
-        'pdf_dir': 'pdf/crawled',
+        # 'pdf_dir': 'pdf/crawled',
         # 'pdf_dir': 'pdf/selenium_alert_handled',
         # 'pdf_dir': 'pdf/issue',
+        'pdf_dir': 'pdf/issue/중간에 종횡비 바뀜',
     }
     create_directories(directories.values())
 
@@ -250,7 +242,6 @@ if __name__ == '__main__':
         'pdf2image_bool':True, 
         'crop_line_bool':False,
         # 1654 x 2339 200dpi
-        'img_rate': 2339 / 841
     }
     
     for pdf_idx in range(0, len(pdf_names), step):
@@ -258,6 +249,7 @@ if __name__ == '__main__':
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
     write_label(directories['label_dir'], rec_label_list, 'rec_banila_train')
-    # write_label(directories['label_dir'], det_label_list, 'det_train')
+    write_label(directories['label_dir'], det_label_list, 'det_train')
+    is_valid_rec_list(f"{directories['label_dir']}/rec_banila_train.txt")
     print("all pdf converted")
     print("excluded_chr_set:", sorted(excluded_chr_set))
