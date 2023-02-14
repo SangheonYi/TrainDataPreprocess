@@ -1,5 +1,5 @@
 from PIL import Image, ImageDraw
-from pdfminer.layout import LTTextBoxHorizontal, LTTextLineHorizontal, LTChar, LTAnno
+from pdfminer.layout import LTTextBoxHorizontal, LTTextLineHorizontal, LTChar
 from pdf2image import convert_from_path
 from PDFForTrainData import PDFForTrainData
 from tqdm import tqdm
@@ -61,6 +61,7 @@ def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
         # data inspecting
         for ltchr in line:
             char = ltchr.get_text()
+            char = txt2valid_range(char)
             # if char not in target_chr:
             if char == ' ' or char not in sayi_vocab: # both LTchr and LTAnno have get_text() and can be blank character
                 if got_left:
@@ -206,17 +207,21 @@ if __name__ == '__main__':
     # pdf_names += [f'wind{pdf_index}' for pdf_index in range(10)]
     directories = {
         'pdf_converted_dir' : 'converted', 
-        # 'boxed_dir' : 'boxed', # if None not save boxed image
-        'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
-        # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
-        # 'cropped_dir' : 'cropped', 
-        'cropped_dir' : 'pdf/issue/cropped', 
-        # 'cropped_dir' : '/mnt/d/cropped', 
         'label_dir': 'labels',
-        # 'pdf_dir': 'pdf/crawled',
+
+        # image dirs
+        'cropped_dir' : 'cropped', 
+        'boxed_dir' : 'boxed', # if None not save boxed image
+        'pdf_dir': 'pdf/crawled',
         # 'pdf_dir': 'pdf/selenium_alert_handled',
+
+        # 'cropped_dir' : '/mnt/d/cropped', 
+        # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
+
+        # for issue        
+        # 'cropped_dir' : 'pdf/issue/cropped', 
+        # 'boxed_dir' : 'pdf/issue/boxed', # if None not save boxed image
         # 'pdf_dir': 'pdf/issue',
-        'pdf_dir': 'pdf/issue/중간에 종횡비 바뀜',
     }
     create_directories(directories.values())
 
@@ -224,6 +229,7 @@ if __name__ == '__main__':
     pdf_names = [corpus_pdf_path.replace(f"{directories['pdf_dir']}/", '').replace('.pdf', '') 
     for corpus_pdf_path in get_file_list(directories['pdf_dir'])]
     print('pdf length', len(pdf_names))
+    # pdf_names = ["&#65378;어린이 통학로 교통안전 기본계획&#65379; 용역 중간보고회 결과보고"]
     pdf_names.sort()
     det_label_list = []
     rec_label_list = []

@@ -531,6 +531,12 @@ convert_dict_list = [
     dingbats_to_arrows, 
     tilde
 ]
+convert_dicts_keys = set()
+convert_dicts_vals = set()
+for convert_dict in convert_dict_list:
+    convert_dicts_keys = convert_dicts_keys.union(convert_dict.keys())
+    convert_dicts_vals = convert_dicts_vals.union(convert_dict.values())
+
 
 def replace_to_valid_chr(txt_chr_set, txt, convert_dict):
     for chr in txt_chr_set.intersection(convert_dict.keys()):
@@ -539,46 +545,49 @@ def replace_to_valid_chr(txt_chr_set, txt, convert_dict):
 
 def txt2valid_range(txt):
     txt_chr_set = set(txt)
-    for convert_dict in convert_dict_list:
-        txt = replace_to_valid_chr(txt_chr_set, txt, convert_dict)
+    need_convert_chars = txt_chr_set.intersection(convert_dicts_keys)
+    if need_convert_chars:
+        for convert_dict in convert_dict_list:
+            txt = replace_to_valid_chr(need_convert_chars, txt, convert_dict)
     return txt
 
 if __name__ == '__main__':
-    with open('../font_data/korean_dict.txt', 'r', encoding='utf-8') as sayi_dict:
-        sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
+    print(txt2valid_range('\\'))
+    # with open('../font_data/korean_dict.txt', 'r', encoding='utf-8') as sayi_dict:
+    #     sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
     
-    for i, convert_dict in enumerate(convert_dict_list):
-        print(f'{i}th diff val:', set(convert_dict.values()) - sayi_vocab)
-    non_printable = {'\x00', '\x81', '\x82', '\x87', '\x8c', '\x8d', '\x8e', '\x8f', '\x9e', '\x9f', '\xa0', '\xad', '\u2002', '\u3000', '\ue047', '\ue06d', '\uf000', '\uf06c', '\uf06d', '\uf06f', '\uf071', '\uf076', '\uf077', '\uf081', '\uf082', '\uf09e', '\uf0a0', '\uf0a6', '\uf0c4', '\uf0e0', '\uf0e8', '\uf0e9', '\uf0f0', '\uf0fe', }
-    dont_care_icon = {'ࠆ', 'ࠗ', 'ࡐ', 'ࡑ', 'ࡒ', 'ࡓ','❍', '❏', '❐', '❑', '❒', '〫', '◼'}
-    dingbat = {'❍', '❏', '❐', '❑', '❒'}    
-    exclude_chr_set = {'\\', '²', '³', '¹', 'ʱ', 'ʲ', 'ʳ', 'ʴ', 'ʵ', 'ʶ', 'ʼ', '˅', 'ˇ', 'ː', '˝', '˪', '˯', 
-    '˹', '˻',  '́', '̇', '͠', 'ʹ', 'Ϛ',  'ᄒ', 'ᆫ', '‣', '⁃', '⁋', '₃', '⃝', '⃞', '↳', '⇀', '⇄', '⇐', '⇓', '⇛', 
-    '⇦', '⇨', '⇩', '∎', '∘', '≼', '≽', '⋅', '⋗', '⋯', '⌌', '⌎', '⌜', '⌟', 
+    # for i, convert_dict in enumerate(convert_dict_list):
+    #     print(f'{i}th diff val:', set(convert_dict.values()) - sayi_vocab)
+    # non_printable = {'\x00', '\x81', '\x82', '\x87', '\x8c', '\x8d', '\x8e', '\x8f', '\x9e', '\x9f', '\xa0', '\xad', '\u2002', '\u3000', '\ue047', '\ue06d', '\uf000', '\uf06c', '\uf06d', '\uf06f', '\uf071', '\uf076', '\uf077', '\uf081', '\uf082', '\uf09e', '\uf0a0', '\uf0a6', '\uf0c4', '\uf0e0', '\uf0e8', '\uf0e9', '\uf0f0', '\uf0fe', }
+    # dont_care_icon = {'ࠆ', 'ࠗ', 'ࡐ', 'ࡑ', 'ࡒ', 'ࡓ','❍', '❏', '❐', '❑', '❒', '〫', '◼'}
+    # dingbat = {'❍', '❏', '❐', '❑', '❒'}    
+    # exclude_chr_set = {'\\', '²', '³', '¹', 'ʱ', 'ʲ', 'ʳ', 'ʴ', 'ʵ', 'ʶ', 'ʼ', '˅', 'ˇ', 'ː', '˝', '˪', '˯', 
+    # '˹', '˻',  '́', '̇', '͠', 'ʹ', 'Ϛ',  'ᄒ', 'ᆫ', '‣', '⁃', '⁋', '₃', '⃝', '⃞', '↳', '⇀', '⇄', '⇐', '⇓', '⇛', 
+    # '⇦', '⇨', '⇩', '∎', '∘', '≼', '≽', '⋅', '⋗', '⋯', '⌌', '⌎', '⌜', '⌟', 
 
-    '⑯', '⑰', '⑱', '⑲', '⑳', 
-    # Enclosed CJK Letters and Months Range: 3200–32FF
-    '㉑', '㉔', '㉕', '㉖', '㉗', '㉘', '㉙', '㉚', '㉛', '㉝', '㉞', '㊞', '㊱', '㊲', '㊳', '㊴', '㊶', '㊷', '㊸', '㊺', 
+    # '⑯', '⑰', '⑱', '⑲', '⑳', 
+    # # Enclosed CJK Letters and Months Range: 3200–32FF
+    # '㉑', '㉔', '㉕', '㉖', '㉗', '㉘', '㉙', '㉚', '㉛', '㉝', '㉞', '㊞', '㊱', '㊲', '㊳', '㊴', '㊶', '㊷', '㊸', '㊺', 
 
-    '⓵', '⓶', '⓷', '─', '━', '│', '┃', '┌', '┍', '┏', '┓', '└', '┕', '┗', '┛', '├', '┠', '┣', '┤', '┨', '┬', 
-    '┯', '┷', '┼', '╂', '╺', '▄', '▢', '▮', '▴', '▵', '▸', '▹', '▻', '◉', '◌', '◪', '◯', '◼', '◽', '◾', 
-    '☐', '☑', '⚪', '⚫', '⚬', 
-    # Dingbats 0x2700 <= i <= 0x27BF
-    '✍', '✐', '✔', '✕', '✥', '✳', '✻', '❊', '❋', '❖', '❙', '❚', '❯', 
-    '❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿', '➀', '➁', '➂', '➃', '➄', '➅', '➆', '➇', '➈', '➉', 
-    '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', 
-    '➔', '➙', '➜', '➠', '➡', '➢', '➣', '➤', '➥', '➩', '➪', '➭', '➮', '➯', '➲',
-    # Miscellaneous Mathematical Symbols-A 0x27C0 <= i <= 0x27EF
-    '⟦', '⟧', 
-    # Supplemental Arrows-A Range: 27F0–27FF
-    '⟶', '⟹', '⟺', 
-    # Miscellaneous Mathematical Symbols-BRange: 2980–29FF
-    '⦁', '⧠', 
-    # Miscellaneous Symbols and Arrows Range: 2B00–2BFF
-    '⬞', '⭕', 
-    # Supplemental Punctuation Range: 2E00–2E7F
-    '⸢',
-    # CJK Symbols and Punctuation Range: 3000–303F
-    '〇', '〖', '〗', '〜', '〮', 
-    # Halfwidth and Fullwidth Forms Range: FF00–FFEF
-    '￭'}
+    # '⓵', '⓶', '⓷', '─', '━', '│', '┃', '┌', '┍', '┏', '┓', '└', '┕', '┗', '┛', '├', '┠', '┣', '┤', '┨', '┬', 
+    # '┯', '┷', '┼', '╂', '╺', '▄', '▢', '▮', '▴', '▵', '▸', '▹', '▻', '◉', '◌', '◪', '◯', '◼', '◽', '◾', 
+    # '☐', '☑', '⚪', '⚫', '⚬', 
+    # # Dingbats 0x2700 <= i <= 0x27BF
+    # '✍', '✐', '✔', '✕', '✥', '✳', '✻', '❊', '❋', '❖', '❙', '❚', '❯', 
+    # '❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿', '➀', '➁', '➂', '➃', '➄', '➅', '➆', '➇', '➈', '➉', 
+    # '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', 
+    # '➔', '➙', '➜', '➠', '➡', '➢', '➣', '➤', '➥', '➩', '➪', '➭', '➮', '➯', '➲',
+    # # Miscellaneous Mathematical Symbols-A 0x27C0 <= i <= 0x27EF
+    # '⟦', '⟧', 
+    # # Supplemental Arrows-A Range: 27F0–27FF
+    # '⟶', '⟹', '⟺', 
+    # # Miscellaneous Mathematical Symbols-BRange: 2980–29FF
+    # '⦁', '⧠', 
+    # # Miscellaneous Symbols and Arrows Range: 2B00–2BFF
+    # '⬞', '⭕', 
+    # # Supplemental Punctuation Range: 2E00–2E7F
+    # '⸢',
+    # # CJK Symbols and Punctuation Range: 3000–303F
+    # '〇', '〖', '〗', '〜', '〮', 
+    # # Halfwidth and Fullwidth Forms Range: FF00–FFEF
+    # '￭'}
