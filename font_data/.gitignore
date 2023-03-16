@@ -5,3 +5,6 @@ __pycache__
 *label.txt
 *.png
 *tar.gz
+fonts
+kor_rec
+test
