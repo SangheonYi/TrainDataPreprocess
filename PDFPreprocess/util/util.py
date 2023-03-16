@@ -8,8 +8,7 @@ def create_directory(path):
 
 def create_directories(paths):
     for path in paths:
-        if path:
-            create_directory(path)
+        create_directory(path)
             
 
 def get_file_list(path):

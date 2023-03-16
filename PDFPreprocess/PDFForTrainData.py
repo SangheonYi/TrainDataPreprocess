@@ -23,9 +23,8 @@ class PDFForTrainData():
         page_height = self.current_page.mediabox[-1]
         upper = page_height * img_rate - upper
         lower = page_height * img_rate - lower
-        # margin = (lower - upper) * 0.025
-        # return [left - margin, upper - margin * 6, right + margin, lower + margin]
-        return [left, upper, right, lower]
+        margin = (lower - upper) * 0.025
+        return [left - margin, upper - margin * 6, right + margin, lower + margin]
         # return [left - margin, upper - (margin) * 3, right + margin, lower + margin]
         # left, lower, right, top
 

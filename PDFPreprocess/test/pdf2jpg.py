@@ -37,7 +37,7 @@ def pdf2jpg(file_name, **kwargs):
 	return convert_from_path(f"pdf/{file_name}.pdf", **kwargs)
 
 if __name__=="__main__":
-	target = "jeong"
+	target = '2022 재난대응 안전한국훈련 기본계획'
 	pdf2jpg_option = {
 		"fmt": "jpg",
 		# "single_file": True,
@@ -46,8 +46,9 @@ if __name__=="__main__":
 		"size": (None, 1000),
 		"timeout": 1200, 
 		# "thread_count": 4,
-		"output_folder": "converted",
+		"output_folder": ".",
 		"output_file": target,
-        "last_page" : 1
+        # "last_page" : 1
 	}
-	pdf2jpg(target, **pdf2jpg_option)
+	convert_from_path(f"{target}.pdf", **pdf2jpg_option)
+	# pdf2jpg('target', **pdf2jpg_option)

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import json
 from recog_valid_unicode import *
+from OCRUnicodeRange import *
 
 with open('sayi_dict.txt', 'r', encoding='utf-8') as sayi_dict:
     sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
@@ -25,8 +26,7 @@ def get_OOV(text):
     # global unuse_chars
     # unuse_chars
     # return be true when set(text) - sayi_vocab is empty set
-    oov_set = list(set(text) - sayi_vocab)
-    return oov_set
+    return set(text) - sayi_vocab
 
 def append_label_list(coor, points, crop_list, gt_word, gt_list):
     invalid_chr_set = set()
@@ -48,10 +48,12 @@ def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
     # print(line.bbox, img_rate)
     coor = pdf.cal_coor(line.bbox, img_rate)
     line_text = line.get_text().strip()
+
     while '  ' in line_text:
         line_text = line_text.replace('  ', ' ')
     line_text = txt2valid_range(line_text)
     if crop_line:
+        gt_word = line_text
         label_text = [line_text]
     else:
         label_text = []
@@ -77,7 +79,6 @@ def parse_labels(crop_line, line, pdf:PDFForTrainData, img_rate):
                 right = space_coor[2]
                 gt_word = f"{gt_word}{char}"
         coor = [left, upper, right, lower]
-        # print(label_text, crop_list)
     invalid_chr_set = append_label_list(coor, points, crop_list, gt_word, label_text)
     return label_text, points, crop_list, invalid_chr_set
 
@@ -171,7 +172,7 @@ def convert_and_crop_pdf_images(directories, pdf2img_option, pdf_name,
 def batch_convert_pdf2crop(pool_count, pdf_names, pdf2img_option, 
     conv_and_crop_opt={
         'pdf2image_bool':False, 
-        'crop_line_bool':False,
+        'crop_line_bool':True,
     },
     directories = {
         'pdf_converted_dir' : 'converted', 
@@ -200,7 +201,6 @@ def write_label(label_dir, label_list, label_name):
     with open(label_path, 'w', encoding='utf-8') as label_file:
         label_file.write(label)
 
-
 if __name__ == '__main__':
     pool_count = os.cpu_count()
     # pool_count = 8
@@ -212,8 +212,8 @@ if __name__ == '__main__':
         # image dirs
         'cropped_dir' : 'cropped', 
         'boxed_dir' : 'boxed', # if None not save boxed image
-        'pdf_dir': 'pdf/crawled',
-        # 'pdf_dir': 'pdf/selenium_alert_handled',
+        # 'pdf_dir': 'pdf/crawled',
+        'pdf_dir': 'pdf/selenium_alert_handled',
 
         # 'cropped_dir' : '/mnt/d/cropped', 
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
@@ -229,7 +229,6 @@ if __name__ == '__main__':
     pdf_names = [corpus_pdf_path.replace(f"{directories['pdf_dir']}/", '').replace('.pdf', '') 
     for corpus_pdf_path in get_file_list(directories['pdf_dir'])]
     print('pdf length', len(pdf_names))
-    # pdf_names = ["&#65378;어린이 통학로 교통안전 기본계획&#65379; 용역 중간보고회 결과보고"]
     pdf_names.sort()
     det_label_list = []
     rec_label_list = []
@@ -239,7 +238,7 @@ if __name__ == '__main__':
         "fmt": "png",
         # "single_file": True,
         "paths_only": True,
-        "use_pdftocairo": False,
+        "use_pdftocairo": True,
         "timeout": 1200, 
         "thread_count": 4,
         # "last_page" : 1,
