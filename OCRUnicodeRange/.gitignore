@@ -1,0 +1,8 @@
+__pycache__
+*.ttf
+*.otf
+*_data/
+*label.txt
+*.png
+*.log
+*tar.gz
