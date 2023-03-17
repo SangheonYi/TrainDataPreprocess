@@ -2,11 +2,13 @@ from OCRUnicodeRange.util import r2l
 from fontTools.ttLib import TTFont
 from OCRUnicodeRange import partial_include
 
-font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf']
+font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', 'HY견고딕.ttf']
 font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
 human_empty_glyph_list = [8361]
 hyhead_empty_glyph_list = [96]
-hyhead_wrong_glyph_list = r2l(162, 163) + r2l(165, 166) + r2l(162, 163) + r2l(162, 163) + r2l(162, 163)
+hyhead_wrong_glyph_list = r2l(162, 163) + r2l(165, 166) + r2l(169, 175) + [181, 187]
+hygyengo_empty_glyph_list = [96]
+hygyengo_wrong_glyph_list = r2l(162, 163) + r2l(165, 166) + r2l(169, 175) + [181, 187]
 gngt_empty_glyph_list = r2l(0, 31) + r2l(127, 255) + r2l(42196, 42238)
 ttf_exclude_glyph = {
     "휴먼명조": human_empty_glyph_list,
@@ -15,7 +17,8 @@ ttf_exclude_glyph = {
     "견고딕": gngt_empty_glyph_list,
     "Gungsuh": [],
     "Batang": [],
-    "Gulim": []
+    "Gulim": [],
+    "HY견고딕": hygyengo_empty_glyph_list + hygyengo_wrong_glyph_list
 }
 
 won_dict = {
@@ -44,10 +47,18 @@ won_dict = {
         chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
         chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
+    "HY견고딕": {
+        chr(0xffe6): chr(0x20a9) # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    }
 }
 
+def convert_won_glyph(src_str: str, font_won_dict: dict):
+    for k, v in font_won_dict.items():
+        src_str = src_str.replace(k, v)
+    return src_str
+
 def is_valid_decimal(font_name, i, exclude_unicodes_list):
-    if "견고딕" in font_name:
+    if "견고딕" == font_name:
         return i not in gngt_empty_glyph_list
     elif not chr(i).isprintable() or i in exclude_unicodes_list:
         return False
