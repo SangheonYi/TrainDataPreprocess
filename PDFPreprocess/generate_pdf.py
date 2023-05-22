@@ -42,14 +42,13 @@ def generate_pdf(text, font_path, font_size, doc_path):
     pdfmetrics.registerFont(font)
     styles = getSampleStyleSheet()
     story = []
-    for font_size in font_sizes: 
-        leading = round(font_size * 1.2)
-        if leading % 2 == 1:
-            leading += 1
-        style_name = f"Hangul{font_size}"
-        styles.add(ParagraphStyle(name=style_name, fontName="HCR Batang", fontSize=font_size, leading=leading))
-        story.append(Paragraph(f"{font_size} font_sizes", style=styles[style_name]))
-        # story.append(Paragraph(text, style=styles["Hangul"]))
+    leading = round(font_size * 1.2)
+    if leading % 2 == 1:
+        leading += 1
+    style_name = f"Hangul{font_size}"
+    styles.add(ParagraphStyle(name=style_name, fontName="HCR Batang", fontSize=font_size, leading=leading))
+    # story.append(Paragraph(f"{font_size} font_sizes", style=styles[style_name]))
+    story.append(Paragraph(text, style=styles[style_name]))
     doc = SimpleDocTemplate(doc_path, pagesize=A4)
     doc.build(story)
     # print(f'corpus_pdf/{doc_name}')
@@ -66,17 +65,19 @@ def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, dir
         doc_path = make_doc_path(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
         if not Path(doc_path).exists():
             pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
+        else:
+            print('doc is aleady exist')
     pool.close()
     pool.join()
 
 if __name__ == '__main__':
-    font_sizes = [8]
     font_sizes = [8, 10, 14, 20, 24]
+    font_sizes = [8]
     font_sizes = range(6, 22, 2)
     font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
     font_names = ['Batang.ttf']
     corpus_name = 'kor_tech'
-    corpus_name = 'test'
+    corpus_name = 'eng'
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', 1)
     pool_count = cpu_count()
     directories = {
@@ -84,11 +85,11 @@ if __name__ == '__main__':
         'font_dir': 'font'
     }
     create_directories(directories.values())
-    generate_pdf("hello 안녕 세계 world", 'font/human_myoungjo.ttf', 8, 'corpus_pdf/test_font_sizes.pdf')
-    # for corpus_idx, text in tqdm(enumerate(corpus_list), total=len(corpus_list)):
-    #     corpus = {
-    #         'idx': corpus_idx,
-    #         'text': text,
-    #         'name': corpus_name
-    #     }
-    #     batch_convert_co2pdf(pool_count, corpus, product(font_names, font_sizes), directories=directories)
+    # generate_pdf("hello 안녕 세계 world", 'font/human_myoungjo.ttf', 8, 'corpus_pdf/test_font_sizes.pdf')
+    for corpus_idx, text in tqdm(enumerate(corpus_list), total=len(corpus_list)):
+        corpus = {
+            'idx': corpus_idx,
+            'text': text,
+            'name': corpus_name
+        }
+        batch_convert_co2pdf(pool_count, corpus, product(font_names, font_sizes), directories=directories)
