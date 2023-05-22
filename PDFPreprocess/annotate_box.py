@@ -6,6 +6,9 @@ from tqdm import tqdm
 from util.util import create_directories, create_directory, get_file_list, is_valid_rec_list
 from multiprocessing import Pool
 import os
+import sys
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(__dir__, '../')))
 from pathlib import Path
 import json
 from recog_valid_unicode import *
@@ -213,7 +216,8 @@ if __name__ == '__main__':
         'cropped_dir' : 'cropped', 
         'boxed_dir' : 'boxed', # if None not save boxed image
         # 'pdf_dir': 'pdf/crawled',
-        'pdf_dir': 'pdf/selenium_alert_handled',
+        # 'pdf_dir': 'pdf/selenium_alert_handled',
+        'pdf_dir': 'pdf/papers',
 
         # 'cropped_dir' : '/mnt/d/cropped', 
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image

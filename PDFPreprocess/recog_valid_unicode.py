@@ -50,7 +50,7 @@ convert_won_dict = {
     chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
     chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
 }
-convert_dict_list = convert_dict_list + convert_won_dict
+convert_dict_list.append(convert_won_dict)
 
 for convert_dict in convert_dict_list:
     convert_dicts_keys = convert_dicts_keys.union(convert_dict.keys())
