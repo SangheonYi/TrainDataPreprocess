@@ -24,8 +24,8 @@ class PDFForTrainData():
         upper = page_height * img_rate - upper
         lower = page_height * img_rate - lower
         margin = (lower - upper) * 0.025
-        return [left - margin, upper - margin * 6, right + margin, lower + margin]
-        # return [left - margin, upper - (margin) * 3, right + margin, lower + margin]
+        # return [left - margin, upper - margin , right + margin, lower + margin * 2] # korean doc fit
+        return [left - margin, upper + margin * 6, right + margin, lower - margin] # eng paper fit
         # left, lower, right, top
 
     def get_pdf_aggregator_result(self, page):
