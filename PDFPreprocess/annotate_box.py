@@ -13,6 +13,7 @@ from pathlib import Path
 import json
 from recog_valid_unicode import *
 from OCRUnicodeRange import *
+from itertools import product
 
 with open('sayi_dict.txt', 'r', encoding='utf-8') as sayi_dict:
     sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
@@ -137,16 +138,18 @@ def crop_pdf_images(
             boxed_path = boxed_dir / Path(image_path).name
             draw_img.save(boxed_path, "JPEG")
         img.close()
-    # write_label(directories['label_dir'], cropped_labels, f'rec_{pdf_name}')
+    write_label(directories['label_dir'], cropped_labels, f'rec_{pdf_name}')
     # write_label(directories['label_dir'], det_labels, f'det_{pdf_name}')
     return ''.join(det_labels), ''.join(cropped_labels), invalid_chr_set
 
-def convert_and_crop_pdf_images(directories, pdf2img_option, pdf_name,
+def convert_and_crop_pdf_images(directories: dict, pdf2img_option: dict, pdf_name,
     pdf2image_bool=True, 
     crop_line_bool=False,
     ):
     pdf_path = f"{directories['pdf_dir']}/{pdf_name}.pdf"
     pdf = PDFForTrainData(pdf_path)
+    # specify dpi
+    pdf_name = f"{pdf_name}_{pdf2img_option.get('dpi', 200)}"
     converted_dir = Path(directories['pdf_converted_dir']) / pdf_name
 
     pdf2img_option["output_file"] = pdf_name
@@ -155,10 +158,13 @@ def convert_and_crop_pdf_images(directories, pdf2img_option, pdf_name,
     converted_list = get_file_list(converted_dir)
     if pdf2image_bool:
         create_directory(converted_dir)
+        print('pdf path to conv', pdf_name)
         converted_list = convert_from_path(pdf_path, **pdf2img_option)
     else:
         converted_list.sort()
     images_size = len(converted_list)
+    if images_size == 0:
+        print('image to crop is not exist. convert pdf first')
     crop_arg = {
         "pdf_name": pdf_name,
         "pdf": pdf,
@@ -208,16 +214,17 @@ if __name__ == '__main__':
     pool_count = os.cpu_count()
     # pool_count = 8
     # pdf_names += [f'wind{pdf_index}' for pdf_index in range(10)]
+    storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/"
     directories = {
-        'pdf_converted_dir' : 'converted', 
-        'label_dir': 'labels',
+        'pdf_converted_dir' : f'{storage_dir}converted', 
+        'label_dir': f'{storage_dir}labels',
 
         # image dirs
-        'cropped_dir' : 'cropped', 
-        'boxed_dir' : 'boxed', # if None not save boxed image
+        'cropped_dir' : f'{storage_dir}cropped', 
+        'boxed_dir' : f'{storage_dir}boxed', # if None not save boxed image
         # 'pdf_dir': 'pdf/crawled',
         # 'pdf_dir': 'pdf/selenium_alert_handled',
-        'pdf_dir': 'pdf/papers',
+        'pdf_dir': f'{storage_dir}pdf/papers',
 
         # 'cropped_dir' : '/mnt/d/cropped', 
         # 'boxed_dir' : '/mnt/c/Exception/', # if None not save boxed image
@@ -245,7 +252,7 @@ if __name__ == '__main__':
         "use_pdftocairo": True,
         "timeout": 1200, 
         "thread_count": 4,
-        # "last_page" : 1,
+        "last_page" : 1,
     }
     conv_and_crop_opt={
         'pdf2image_bool':True, 
@@ -253,12 +260,13 @@ if __name__ == '__main__':
         # 1654 x 2339 200dpi
     }
     
-    for pdf_idx in range(0, len(pdf_names), step):
+    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(72, 201)):
+        pdf2img_option['dpi'] = dpi
         det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2img_option, conv_and_crop_opt=conv_and_crop_opt, directories=directories)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
-    write_label(directories['label_dir'], rec_label_list, 'rec_banila_train')
+    write_label(directories['label_dir'], rec_label_list, 'eng_adminis_eval')
     write_label(directories['label_dir'], det_label_list, 'det_train')
-    is_valid_rec_list(f"{directories['label_dir']}/rec_banila_train.txt")
+    is_valid_rec_list(f"{directories['label_dir']}/eng_adminis_eval.txt")
     print("all pdf converted")
     print("excluded_chr_set:", sorted(excluded_chr_set))

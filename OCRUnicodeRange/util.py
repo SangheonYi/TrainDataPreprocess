@@ -21,7 +21,7 @@ def enc_src2unicode_str(src, encoding: str):
         return unic_str
     return src
 
-def write_label_file(label_file_name, label_lines):
+def write_font_label_file(label_file_name, label_lines):
     with open(label_file_name, 'w', encoding="utf-8") as label_file:
         label_contents = ''.join(label_lines)
         label_file.write(label_contents)

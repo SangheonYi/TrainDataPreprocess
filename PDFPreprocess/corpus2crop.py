@@ -30,14 +30,19 @@ def cor2crop(font_config, corpus_name, corpus_list, directories={
 
     ## convert and crop tmp pdfs
     pdf2jpg_option = {
-        "fmt": "jpg",
+        "fmt": "png",
         # "single_file": True,
         "paths_only": True,
         "use_pdftocairo": True,
         "timeout": 1200, 
         "thread_count": 4,
         "output_folder": directories['pdf_converted_dir'],
-        "last_page" : 1
+        # "last_page" : 1
+    }
+    conv_and_crop_opt={
+        'pdf2image_bool':True, 
+        'crop_line_bool':False,
+        # 1654 x 2339 200dpi
     }
     # get font, size pdf
     pdf_names = [corpus_pdf_path.replace(f"{directories['pdf_dir']}/", '').replace('.pdf', '') 
@@ -48,7 +53,7 @@ def cor2crop(font_config, corpus_name, corpus_list, directories={
     rec_label_list = []
     step = pool_count
     for pdf_idx in range(0, len(pdf_names), step):
-        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2jpg_option, pdf2image_bool=True, directories=directories)
+        det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2jpg_option, conv_and_crop_opt=conv_and_crop_opt, directories=directories)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
     write_label(directories['label_dir'], rec_label_list, 'rec_banila_train')
@@ -58,29 +63,35 @@ def cor2crop(font_config, corpus_name, corpus_list, directories={
 
 if __name__ == '__main__':
     pool_count = cpu_count()
-    font_sizes = [8, 10, 14, 20, 24]
+    font_sizes = [8, 10, 14, 20, 24] # pt size
+    font_sizes = [8]
     font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
-    # font_names = ['Dotum.ttf']
+    font_names = ['Dotum.ttf']
+    font_names = ['Batang.ttf']
     font_config = list(product(font_names, font_sizes))
+    print(font_config)
     # split corpus
     corpus_name = 'wind' # total 1281505, split line size 50
     corpus_count = 25631
     
     corpus_name = 'kor_tech'
+    corpus_name = 'eng'
     corpus_count = 1
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', corpus_count)
     step_size = 125
+    corpus_list = ["det test data"]
     corpus_range = range(0, corpus_count, step_size)
+    storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/"
     for tmp_idx, interval_start in tqdm(enumerate(corpus_range), total=len(corpus_range)):
         with tempfile.TemporaryDirectory() as pdf_tmp_dir, tempfile.TemporaryDirectory() as conv_tmp_dir:
             directories = {
-                'pdf_converted_dir':conv_tmp_dir,
-                'boxed_dir': None,
-                'cropped_dir':'cropped',
-                'label_dir': 'labels',
+                'pdf_converted_dir':f'{storage_dir}converted',
+                'boxed_dir': f'{storage_dir}boxed',
+                'cropped_dir':f'{storage_dir}cropped',
+                'label_dir': f'{storage_dir}labels',
                 'pdf_dir': pdf_tmp_dir,
                 'font_dir': 'font'
             }
             cor2crop(font_config, corpus_name, corpus_list[interval_start:interval_start + step_size], directories=directories, tmp_idx=tmp_idx)
     if is_valid_rec_list(f"{directories['label_dir']}/rec_banila_train.txt"):
-        print('😎 label is valid!💯')
+        print('😎 rec label is valid!💯')
