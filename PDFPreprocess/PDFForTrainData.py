@@ -19,6 +19,8 @@ class PDFForTrainData():
         bbox = [coor * img_rate for coor in bbox]
         left, lower, right, upper = bbox
         # pdf의 영점은 좌측 하단 != 이미지의 영점은 좌측 상단
+        # pdf는 사용자 관점 아래에서 위로 증가하는 y축
+        # 이미지는 사용자 관점 위에서 아래로 증가하는 y축
         # 영점조절 (lower-left, upper-right)
         page_height = self.current_page.mediabox[-1]
         upper = page_height * img_rate - upper
