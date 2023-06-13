@@ -260,7 +260,7 @@ if __name__ == '__main__':
         # 1654 x 2339 200dpi
     }
     
-    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(72, 201)):
+    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(200, 501, 50)):
         pdf2img_option['dpi'] = dpi
         det_label, rec_label = batch_convert_pdf2crop(pool_count, pdf_names[pdf_idx:pdf_idx + step], pdf2img_option, conv_and_crop_opt=conv_and_crop_opt, directories=directories)
         rec_label_list.append(rec_label)
