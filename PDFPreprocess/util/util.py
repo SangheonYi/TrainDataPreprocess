@@ -2,14 +2,11 @@ import os
 import time
 
 def create_directory(path):
-    if path:
-        if not os.path.exists(path):
-            os.makedirs(path)
-
+    os.makedirs(path, exist_ok=True)
+    
 def create_directories(paths):
     for path in paths:
-        create_directory(path)
-            
+        os.makedirs(path, exist_ok=True)
 
 def get_file_list(path):
     for root, dir, file_list in os.walk(path):
@@ -32,3 +29,10 @@ def is_valid_rec_list(file_name):
                 print("not exist:", path)
                 return False
     return True
+
+def write_label(label_dir, label_list, label_name):
+    os.makedirs(label_dir, exist_ok=True)
+    label = ''.join(label_list)
+    label_path = f'{label_dir}/{label_name}.txt'
+    with open(label_path, 'w', encoding='utf-8') as label_file:
+        label_file.write(label)
