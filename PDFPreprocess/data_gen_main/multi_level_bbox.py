@@ -1,20 +1,19 @@
-from pdf2image import convert_from_path, convert_from_bytes
+from pdf2image import convert_from_path
 from PDFForTrainData import PDFForTrainData
 from tqdm import tqdm
-from util.util import get_file_list, is_valid_rec_list, write_label
-from util.option_args import parse_args, get_pdf2img_option
+from util import get_file_list, is_valid_rec_list, write_label
+from option_args import parse_args, get_pdf2img_option
 from multiprocessing import Pool
 import os
-import sys
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(__dir__, '../../')))
 from pathlib import Path
 import json
+
 from OCRUnicodeRange import *
 from itertools import product
 from merge_bbox import merge_overlapping_rectangles, add_merge_margin
 from functools import partial
 import time
+from pprint import pprint
 
 excluded_chr_set = set()
 
@@ -44,18 +43,18 @@ def margin_and_merge_bbox(low_level_bbox_list, margin_rate, pdf: PDFForTrainData
     margined_bbox_list = list(map(add_merge_margin_partial, low_level_bbox_list))
     high_level_bbox_list = merge_overlapping_rectangles(margined_bbox_list)
     if draw_margin_box:
-        pdf.draw_bboxes("margined box", margined_bbox_list, box_color=margin_box_color, line_width=8, draw_coord=True)
+        pdf.draw_bboxes("margined box", margined_bbox_list, box_color=margin_box_color, line_width=8)
     if draw_high_level_box:
-        pdf.draw_bboxes("high_level_coord", high_level_bbox_list, box_color=merged_box_color, line_width=6, draw_coord=True)
+        pdf.draw_bboxes("high_level_coord", high_level_bbox_list, box_color=merged_box_color, line_width=6)
     return high_level_bbox_list
 
 def merge_section_bbox(pdf: PDFForTrainData, word_bbox_list):
     # draw word box
-    pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
+    # pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
     # merge horizontal
     line_bbox_list = margin_and_merge_bbox(word_bbox_list, 0.23, pdf)
     # merge vertical
-    section_bbox_list = margin_and_merge_bbox(line_bbox_list, 0.2, pdf, 
+    section_bbox_list = margin_and_merge_bbox(line_bbox_list, 0.3, pdf, 
                                               is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=False)
     page_det_section_labels = []
     for i, merged_coord in enumerate(section_bbox_list):
@@ -83,13 +82,13 @@ def crop_pdf_images(args,
         det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         # merge section label
         page_det_section_labels = merge_section_bbox(pdf, word_bbox_list)
-        pdf.save_draw(image_path)
+        # pdf.save_draw(image_path)
         det_section_labels.append(f"{image_path}\t{json.dumps(page_det_section_labels, ensure_ascii=False)}\n")
     # write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
     # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
 
     # section label
-    write_label(args.label_dir, det_labels, f'det_{pdf_name}')
+    # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
     return ''.join(det_labels), ''.join(det_section_labels), ''.join(cropped_labels), invalid_chr_set
 
 def convert_pdf2img(args, pdf_name, pdf_path):
@@ -97,13 +96,9 @@ def convert_pdf2img(args, pdf_name, pdf_path):
     if args.pdf2image_bool:
         pdf2img_option = get_pdf2img_option(args)
         pdf2img_option["output_file"] = pdf_name
-        pdf2img_option["output_folder"] = converted_dir
-        # pdf2img_option["size"] = (None, pdf.page_height * img_rate) # preserve aspect ratio with pdf.page_height * img_rate pixels height
-        os.makedirs(converted_dir, exist_ok=True)
-        print('pdf path to conv', pdf_path)
-        with open(pdf_path,'rb') as pdf_file:
-            converted_list = convert_from_bytes(pdf_file.read(), **pdf2img_option)
-        # converted_list = convert_from_path(pdf_path, **pdf2img_option)
+        pdf2img_option["output_folder"] = str(converted_dir)
+        os.makedirs(pdf2img_option["output_folder"], exist_ok=True)
+        converted_list = convert_from_path(pdf_path, **pdf2img_option)
     else:
         converted_list = get_file_list(converted_dir)
         converted_list.sort()
@@ -111,13 +106,18 @@ def convert_pdf2img(args, pdf_name, pdf_path):
 
 def convert_and_crop_pdf_images(args, pdf_name):
     # original pdf data path
-    pdf_path = f"{args.pdf_dir}/{pdf_name}.pdf"
+    pdf_path = Path(f"{args.pdf_dir}/{pdf_name}.pdf")
     # specify dpi with pdf name
     pdf_name = f"{pdf_name}_{args.dpi}"
     boxed_dir = Path(args.boxed_dir) / pdf_name if args.boxed_dir else None
     cropped_dir = Path(args.cropped_dir) / pdf_name
     pdf = PDFForTrainData(pdf_path, args.crop_line_bool, boxed_dir, cropped_dir)
-    converted_list = convert_pdf2img(args, pdf_name, pdf_path)
+    try:
+        converted_list = convert_pdf2img(args, pdf_name, pdf_path)
+    except:
+        print('convert and crop error:', pdf_name)
+        return
+    
     images_size = len(converted_list)
     if images_size == 0:
         print('image to crop is not exist. convert pdf first')
@@ -155,22 +155,22 @@ if __name__ == '__main__':
     # create_directories(directories.values())
 
     # font, size pdf
-    pdf_names = [corpus_pdf_path.replace(f"{args.pdf_dir}/", '').replace('.pdf', '') 
-    for corpus_pdf_path in get_file_list(args.pdf_dir)]
-    print(pdf_names)
+    pdf_names = [corpus_pdf_path.stem for corpus_pdf_path in get_file_list(args.pdf_dir)]
     "어린이 통학로 교통안전 기본계획 용역 중간보고회 결과보고"
     print('pdf length', len(pdf_names))
     pdf_names.sort()
     det_label_list = []
     rec_label_list = []
-    step = args.pool_count * 2
+    det_section_label_list = []
+    step = args.pool_count
     
     for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(200, 201)):
         args.dpi = dpi
-        det_label, det_section_label_list, rec_label = batch_convert_pdf2crop(args.pool_count, pdf_names[pdf_idx:pdf_idx + step], args)
+        det_label, det_section_label, rec_label = batch_convert_pdf2crop(args.pool_count, pdf_names[pdf_idx:pdf_idx + step], args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
-    write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
+        det_section_label_list.append(det_section_label)
+    # write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
     # write_label(args.label_dir, det_label_list, 'det_train')
     write_label(args.label_dir, det_section_label_list, 'det_section_train')
     # is_valid_rec_list(f"{args.label_dir}/eng_adminis_eval.txt")

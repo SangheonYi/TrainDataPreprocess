@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 
 def create_directory(path):
     os.makedirs(path, exist_ok=True)
@@ -10,7 +11,8 @@ def create_directories(paths):
 
 def get_file_list(path):
     for root, dir, file_list in os.walk(path):
-        return [os.path.join(root, file) for file in file_list]
+        return [Path(root) / file for file in file_list]
+    print(f"check {path} directory. its empty.")
 
 def logging_time(original_fn):
     def wrapper_fn(*args, **kwargs):

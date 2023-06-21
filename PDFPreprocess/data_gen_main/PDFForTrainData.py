@@ -9,8 +9,8 @@ from pathlib import Path
 import os
 import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(__dir__, '../')))
-from util.recog_valid_unicode import txt2valid_range
+sys.path.append(str(Path(__dir__) / '../util'))
+from recog_valid_unicode import txt2valid_range
 
 with open('sayi_dict.txt', 'r', encoding='utf-8') as sayi_dict:
     sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
@@ -68,8 +68,8 @@ class PDFForTrainData():
         # 영점조절 (lower-left, upper-right) x축으로 대칭이동해야한다.
         upper = page_height * img_rate - pdf_lower
         lower = page_height * img_rate - pdf_upper
-        margin = (lower - upper) * 0.05
-        return [left - margin, upper - margin , right + margin, lower + margin * 8] # korean doc fit
+        margin = (lower - upper) * 0.025
+        return [left - margin, upper, right + margin, lower] # korean doc fit
 
     def get_valid_lines_from_page(self):
         valid_lines = []
@@ -135,7 +135,6 @@ class PDFForTrainData():
                         gt_word = ''
                     got_left = False
                 elif isinstance(ltchr, LTChar) :
-                    self.draw_bboxes("word box", [ltchr.bbox], draw_coord=True, bbox_only=True, box_color='red')
                     space_coor = self.cal_coor(ltchr.bbox)
                     if not got_left:
                         left, upper, right, lower = space_coor
