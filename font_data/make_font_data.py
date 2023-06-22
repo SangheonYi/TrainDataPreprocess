@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import sys
 sys.path.append("..")
-from OCRUnicodeRange import *
+from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file
 import random
 import time
 
@@ -11,12 +11,12 @@ def make_font_data(text_to_draw, font_path, encoding, save_path, font_size=10):
     encode_type = 'unic' if encoding.startswith("utf") else 'wans'
     font = ImageFont.truetype(font_path, size=font_size, encoding=encode_type)
     # Image size
-    W = int(font.getlength(text_to_draw) * 1.2)
-    H = int(font_size * 1.1)
+    W = int(font.getlength(text_to_draw) + font_size * 0.1)
+    H = int(font_size * 1.15)
     # draw text_to_draw on image
     image =Image.new('RGB', (W, H), color = 'white')
     draw = ImageDraw.Draw(image)
-    draw.text((W * 0.1, 0), text_to_draw, font=font, fill="black")
+    draw.text((0, 0), text_to_draw, font=font, fill="black")
     # save image
     image.save(save_path)
 
@@ -27,14 +27,15 @@ def update_dict(support_chars, encoding, korean_dict):
     print("dict_size: ", len(korean_dict))
     return korean_dict
 
-def get_unicode_label(random_chars, encoding, font_name):
-    for idx, target_char in enumerate(random_chars):
-        char_code = ord(target_char)
-        unicode_char = encode_int2unicode_chr(char_code, encoding)
-        random_chars[idx:] = won_dict[font_name].get(unicode_char, unicode_char)
-    return 
+def get_random_arg(target_char, support_chars, font_name):
+    random_chars = random.choices(support_chars, k=random.randint(8,23))
+    joined = ''.join(random_chars)
+    random_chars = f"{target_char}{joined}"
+    random_gt = random_chars.translate(won_dict[font_name])
+    random_size = random.randint(8, 56)
+    return f"{target_char}{joined}", random_gt, random_size
 
-def make_fonts_dataset(font_name_list, font_sizes, storage_dir):
+def make_fonts_dataset(font_name_list, font_sizes, storage_dir, ramdom_font_size=False):
     label_lines = []
     korean_dict = set()
     
@@ -43,19 +44,25 @@ def make_fonts_dataset(font_name_list, font_sizes, storage_dir):
         support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
         korean_dict = update_dict(support_chars, encoding, korean_dict)
         start = time.time()
-        font_won_table = str.maketrans(won_dict[font_name].keys(), '12345')
         if support_chars:
             for font_size in font_sizes:
-                save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
+                if ramdom_font_size:
+                    save_dir = f'{storage_dir}/{font_name}_random_size_data'
+                else:
+                    save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
                 os.makedirs(save_dir, exist_ok=True)
-                for idx, support_char in enumerate(support_chars):
-                    char_code = ord(support_char)
+                for idx, target_char in enumerate(support_chars):
+                    char_code = ord(target_char)
                     save_path = f'{save_dir}/{idx}_{char_code}.jpg'
-                    random_chars = f"{support_char}{random.choices(support_chars, k=random.randint(8,15))}"
+                    random_chars, random_gt, random_size = get_random_arg(target_char, support_chars, font_name)
+                    if ramdom_font_size:
+                        font_size = random_size
                     make_font_data(random_chars, font_path, encoding, save_path, font_size=font_size)
-                    unicode_label = get_unicode_label(random_chars, encoding, font_name)
-                    label_lines.append(f"{save_path}\t{unicode_label}\n")
-                print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
+                    label_lines.append(f"{save_path}\t{random_gt}\n")
+                if ramdom_font_size:
+                    print(f"font: {font_name}, random font size done, spent: {time.time() - start}")
+                else:
+                    print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
         else:
             print(f"{font_path} is empty")
     return label_lines, korean_dict
@@ -64,10 +71,12 @@ def make_fonts_dataset(font_name_list, font_sizes, storage_dir):
 storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/font_data"
 
 font_name_list = ['Dotum']
-font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
 font_sizes = [10, 15, 20] # eval to small font
+font_sizes = [8, 10, 15, 20]
+font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
+ramdom_font_size = False
 
-label_lines, korean_dict = make_fonts_dataset(font_name_list, font_sizes, storage_dir)
+label_lines, korean_dict = make_fonts_dataset(font_name_list, font_sizes, storage_dir, ramdom_font_size=ramdom_font_size)
 write_font_label_file('rec_font_train.txt', label_lines)
 with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
     for e in sorted(korean_dict):
