@@ -2,8 +2,9 @@ from OCRUnicodeRange.util import r2l
 from fontTools.ttLib import TTFont
 from OCRUnicodeRange import partial_include
 
+# 견고딕은 인코딩 이슈가 자주 발생하는 euc-kr이고 문자 셋도 적어서 제외하고 HY견고딕로 대체하는 편이다.
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', 'HY견고딕.ttf']
-font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
+font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi, 더 작은 글자 인식 필요. 현재 140dpi 8pt부터 인식률 무너짐
 human_empty_glyph_list = [8361]
 hyhead_empty_glyph_list = [96]
 hyhead_wrong_glyph_list = r2l(162, 163) + r2l(165, 166) + r2l(169, 175) + [181, 187]
