@@ -43,36 +43,35 @@ def get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat):
     random_size = random.randint(8, 56)
     return f"{target_char}{joined}", random_gt, random_size
 
-def make_fonts_dataset(font_name_list, font_sizes, storage_dir, ramdom_font_size=False, ramdom_glyph_concat=False):
+def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_font_size=False, ramdom_glyph_concat=False):
     label_lines = []
     korean_dict = set()
     
-    for font_name in font_name_list:
-        font_path = f"fonts/{font_name}.ttf"
-        support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
-        korean_dict = update_dict(support_chars, encoding, korean_dict)
-        start = time.time()
-        if support_chars:
-            for font_size in font_sizes:
+    font_path = f"fonts/{font_name}.ttf"
+    support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
+    korean_dict = update_dict(support_chars, encoding, korean_dict)
+    start = time.time()
+    if support_chars:
+        for font_size in font_sizes:
+            if ramdom_font_size:
+                save_dir = f'{storage_dir}/{font_name}_random_size_data'
+            else:
+                save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
+            os.makedirs(save_dir, exist_ok=True)
+            for idx, target_char in enumerate(support_chars):
+                char_code = ord(target_char)
+                random_chars, random_gt, random_size = get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat)
                 if ramdom_font_size:
-                    save_dir = f'{storage_dir}/{font_name}_random_size_data'
-                else:
-                    save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
-                os.makedirs(save_dir, exist_ok=True)
-                for idx, target_char in enumerate(support_chars):
-                    char_code = ord(target_char)
-                    random_chars, random_gt, random_size = get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat)
-                    if ramdom_font_size:
-                        font_size = random_size
-                    save_path = f'{save_dir}/{idx}_{char_code}_{font_size}size.jpg'
-                    make_font_data(random_chars, font_path, encoding, save_path, font_size=font_size)
-                    label_lines.append(f"{save_path}\t{random_gt}\n")
-                if ramdom_font_size:
-                    print(f"font: {font_name}, random font size done, spent: {time.time() - start}")
-                else:
-                    print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
-        else:
-            print(f"{font_path} is empty")
+                    font_size = random_size
+                save_path = f'{save_dir}/{idx}_{char_code}_{font_size}size.jpg'
+                make_font_data(random_chars, font_path, encoding, save_path, font_size=font_size)
+                label_lines.append(f"{save_path}\t{random_gt}\n")
+            if ramdom_font_size:
+                print(f"font: {font_name}, random font size done, spent: {time.time() - start}")
+            else:
+                print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
+    else:
+        print(f"{font_path} is empty")
     return label_lines, korean_dict
 
 from itertools import zip_longest
@@ -90,15 +89,19 @@ if __name__ == '__main__':
     font_sizes = [10, 15, 20] # eval to small font
     font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
     font_sizes = [8]
-    ramdom_font_size = True
-    ramdom_glyph_concat = True
+    ramdom_font_size = False
+    ramdom_glyph_concat = False
 
-    pool_count = os.cpu_count()
-    pool = Pool(pool_count)
+
+    pool_count = os.cpu_count() // 2
     for font_name_sub_list in grouper(font_name_list, pool_count, fillvalue=None):
+        pool_count = min(pool_count, len(font_name_sub_list))
+        print(f"pool_count: {pool_count}")
+        pool = Pool(pool_count)
         font_name_sub_list = [font_name for font_name in font_name_sub_list if font_name is not None]
-        results = {font_name:pool.apply_async(make_fonts_dataset, args=([font_name], font_sizes, storage_dir, ramdom_font_size, ramdom_glyph_concat)) 
-                for font_name in font_name_sub_list }
+        results = {font_name:pool.apply_async(make_fonts_dataset, args=
+                                              (font_name, font_sizes, storage_dir, ramdom_font_size, ramdom_glyph_concat)) 
+                                              for font_name in font_name_sub_list }
         pool.close()
         pool.join()
         for font_name in font_name_sub_list:
