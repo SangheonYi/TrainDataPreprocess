@@ -3,6 +3,9 @@
 from OCRUnicodeRange.util import r2l
 from OCRUnicodeRange.convert_similar_glyphs import convert_dict_list
 
+def is_cjk_ideographs(chr_code):
+    return chr_code in r2l(0x3300, 0x9FFF)
+
 exclude_unicodes = {
     # basic latin 0x0020, 0x007F
 
