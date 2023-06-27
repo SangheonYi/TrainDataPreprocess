@@ -36,7 +36,7 @@ def update_dict(support_chars, encoding, korean_dict):
 def get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat):
     random_chars = ''
     if ramdom_glyph_concat:
-        random_chars = random.choices(support_chars, k=random.randint(8,23))
+        random_chars = random.choices(support_chars, k=random.randint(15,23))
     joined = ''.join(random_chars)
     random_chars = f"{target_char}{joined}"
     random_gt = random_chars.translate(won_dict[font_name])
@@ -92,13 +92,13 @@ if __name__ == '__main__':
     ramdom_font_size = False
     ramdom_glyph_concat = False
 
-
-    pool_count = os.cpu_count() // 2
+    pool_count = os.cpu_count() // 4
+    pool_count = pool_count if pool_count > 1 else 1 
     for font_name_sub_list in grouper(font_name_list, pool_count, fillvalue=None):
+        font_name_sub_list = [font_name for font_name in font_name_sub_list if font_name is not None]
         pool_count = min(pool_count, len(font_name_sub_list))
         print(f"pool_count: {pool_count}")
         pool = Pool(pool_count)
-        font_name_sub_list = [font_name for font_name in font_name_sub_list if font_name is not None]
         results = {font_name:pool.apply_async(make_fonts_dataset, args=
                                               (font_name, font_sizes, storage_dir, ramdom_font_size, ramdom_glyph_concat)) 
                                               for font_name in font_name_sub_list }
