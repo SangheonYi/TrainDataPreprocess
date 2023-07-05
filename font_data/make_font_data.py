@@ -2,10 +2,12 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import sys
 sys.path.append("..")
-from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file
+from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, is_cjk_ideographs
 from multiprocessing import Pool
 import random
 import time
+import numpy as np
+from scipy.stats import loguniform
 
 def make_font_data(text_to_draw, font_path, encoding, save_path, font_size=10):
     # font setting
@@ -33,6 +35,12 @@ def update_dict(support_chars, encoding, korean_dict):
     print("dict_size: ", len(korean_dict))
     return korean_dict
 
+def sample_size(start_point, step_size, boundary):
+    a, b = boundary
+    rv = loguniform(a, b)
+    drawn = (rv.rvs(1) - a) * step_size + start_point
+    return int(drawn[0])
+
 def get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat):
     random_chars = ''
     if ramdom_glyph_concat:
@@ -40,6 +48,9 @@ def get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat):
     joined = ''.join(random_chars)
     random_chars = f"{target_char}{joined}"
     random_gt = random_chars.translate(won_dict[font_name])
+    is_fault = won_dict[font_name].get(target_char, False)
+    if is_fault and is_fault in random_gt:
+        print(f"found fault at {font_name} in ❓{random_gt}❓")
     random_size = random.randint(8, 56)
     return f"{target_char}{joined}", random_gt, random_size
 
@@ -60,6 +71,8 @@ def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_font_size=Fals
             os.makedirs(save_dir, exist_ok=True)
             for idx, target_char in enumerate(support_chars):
                 char_code = ord(target_char)
+                if font_size < 11 and is_cjk_ideographs(char_code):
+                    continue
                 random_chars, random_gt, random_size = get_random_arg(target_char, support_chars, font_name, ramdom_glyph_concat)
                 if ramdom_font_size:
                     font_size = random_size
@@ -85,12 +98,16 @@ if __name__ == '__main__':
     font_label_list = []
     font_dict_set = set()
 
+    font_name_list = ['hy헤드라인m']
     font_name_list = ['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕']
     font_sizes = [10, 15, 20] # eval to small font
     font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
-    font_sizes = [8]
+    # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
+
+    step_size = 11
+    font_sizes = [8, 10, 24] + [sample_size(start_point, step_size, (4, 5)) for start_point in range(11, 56, step_size)] 
     ramdom_font_size = False
-    ramdom_glyph_concat = False
+    ramdom_glyph_concat = True
 
     pool_count = os.cpu_count() // 4
     pool_count = pool_count if pool_count > 1 else 1 
