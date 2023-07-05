@@ -63,9 +63,11 @@ def make_draw_list(support_chars, save_dir, font, font_name, ramdom_glyph_concat
         random_chars, random_gt = get_random_gt(target_char, support_chars, font_name, ramdom_glyph_concat)
         if font.size < 11 and is_cjk_ideographs(char_code):
             continue
-        save_path = f'{save_dir}/{idx}_{char_code}_{font.size}size.jpg'
+        save_path = f'{save_dir}/{idx}_{char_code}.jpg'
         sub_label_lines.append(f"{save_path}\t{random_gt}\n")
         draw_list.append((random_chars, save_path))
+        if target_char == '\\':
+            break
     return draw_list, sub_label_lines
 
 def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_glyph_concat=False):
@@ -75,9 +77,9 @@ def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_glyph_concat=F
     font_path = f"fonts/{font_name}.ttf"
     support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
     korean_dict = update_dict(support_chars, encoding, korean_dict)
-    start = time.time()
     if support_chars:
         for font_size in font_sizes:
+            start = time.time()
             font = font_init(font_path, encoding, font_size=font_size)
             save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
             os.makedirs(save_dir, exist_ok=True)
@@ -104,13 +106,14 @@ if __name__ == '__main__':
 
     font_name_list = ['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕']
     font_name_list = ['hy헤드라인m']
+    font_name_list = ['Dotum']
     font_sizes = [10, 15, 20] # eval to small font
     font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
     # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
 
     step_size = 11
     font_sizes = [8, 10, 24] + [sample_size(start_point, step_size, (4, 5)) for start_point in range(11, 56, step_size)] 
-    font_sizes = [8]
+    font_sizes = [30]
     ramdom_glyph_concat = True
 
     pool_count = os.cpu_count() // 2

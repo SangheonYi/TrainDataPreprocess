@@ -24,32 +24,32 @@ ttf_exclude_glyph = {
 
 won_dict = {
     "휴먼명조": {
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "hy헤드라인m": {
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "견고딕": {
-        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
+      0x5c: chr(0x20a9), # \ ₩ basic latin back slash
     },
     "Dotum": {
-        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0x5c: chr(0x20a9), # \ ₩ basic latin back slash
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "Gungsuh": {
-        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0x5c: chr(0x20a9), # \ ₩ basic latin back slash
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "Batang": {
-        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0x5c: chr(0x20a9), # \ ₩ basic latin back slash
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "Gulim": {
-        chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
-        chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0x5c: chr(0x20a9), # \ ₩ basic latin back slash
+      0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     },
     "HY견고딕": {
-        chr(0xffe6): chr(0x20a9) # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+      0xffe6: chr(0x20a9) # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
     }
 }
 
