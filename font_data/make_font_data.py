@@ -13,21 +13,22 @@ def font_init(font_path, encoding, font_size=10):
     encode_type = 'unic' if encoding.startswith("utf") else 'wans'
     return ImageFont.truetype(font_path, size=font_size, encoding=encode_type)
 
-def make_font_data(text_to_draw, save_path, font):
-    # Image size
-    left, top, right, bottom = font.getbbox(text_to_draw) # warning, char code 32 space's top and bottom are same
-    W = int(font.getlength(text_to_draw))
-    text_coord = (0, 0)
-    if font.size < 10:
-        text_coord = (0, 1)
-        W += 1
-    H = int((bottom - top) * 1.1) if text_to_draw != ' ' else font.size
-    # draw text_to_draw on image
-    image =Image.new('RGB', (W, H), color = 'white')
-    draw = ImageDraw.Draw(image)
-    draw.text(text_coord, text_to_draw, font=font, fill="black")
-    # save image
-    image.save(save_path)
+def make_font_data(draw_list, font):
+    for text_to_draw, save_path in draw_list:
+        # Image size
+        left, top, right, bottom = font.getbbox(text_to_draw) # warning, char code 32 space's top and bottom are same
+        W = int(font.getlength(text_to_draw))
+        text_coord = (0, 0)
+        if font.size < 10:
+            text_coord = (0, 1)
+            W += 1
+        H = int((bottom - top) * 1.1) if text_to_draw != ' ' else font.size
+        # draw text_to_draw on image
+        image =Image.new('RGB', (W, H), color = 'white')
+        draw = ImageDraw.Draw(image)
+        draw.text(text_coord, text_to_draw, font=font, fill="black")
+        # save image
+        image.save(save_path)
 
 def update_dict(support_chars, encoding, korean_dict):
     if encoding.startswith("utf"):
@@ -64,10 +65,7 @@ def make_draw_list(support_chars, save_dir, font, font_name, ramdom_glyph_concat
             continue
         save_path = f'{save_dir}/{idx}_{char_code}_{font.size}size.jpg'
         sub_label_lines.append(f"{save_path}\t{random_gt}\n")
-        draw_list.append({
-            "text_to_draw": random_chars, 
-            "save_path": save_path, 
-        })
+        draw_list.append((random_chars, save_path))
     return draw_list, sub_label_lines
 
 def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_glyph_concat=False):
@@ -87,7 +85,7 @@ def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_glyph_concat=F
             label_lines += sub_label_lines
 
             # generate font data
-            map(lambda draw_meta: make_font_data(draw_meta["text_to_draw"], draw_meta["save_path"], font), draw_list)
+            make_font_data(draw_list, font)
             print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
     else:
         print(f"{font_path} is empty")
@@ -115,7 +113,7 @@ if __name__ == '__main__':
     font_sizes = [8]
     ramdom_glyph_concat = True
 
-    pool_count = os.cpu_count() // 4
+    pool_count = os.cpu_count() // 2
     pool_count = pool_count if pool_count > 1 else 1 
     for font_name_sub_list in grouper(font_name_list, pool_count, fillvalue=None):
         font_name_sub_list = [font_name for font_name in font_name_sub_list if font_name is not None]
