@@ -4,8 +4,8 @@ from tqdm import tqdm
 from util import get_file_list, is_valid_rec_list, write_label
 from option_args import parse_args, get_pdf2img_option
 from multiprocessing import Pool
-import os
 from pathlib import Path
+import random
 import json
 
 from OCRUnicodeRange import *
@@ -50,12 +50,12 @@ def margin_and_merge_bbox(low_level_bbox_list, margin_rate, pdf: PDFForTrainData
 
 def merge_section_bbox(pdf: PDFForTrainData, word_bbox_list):
     # draw word box
-    # pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
+    pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
     # merge horizontal
     line_bbox_list = margin_and_merge_bbox(word_bbox_list, 0.23, pdf)
     # merge vertical
     section_bbox_list = margin_and_merge_bbox(line_bbox_list, 0.3, pdf, 
-                                              is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=False)
+                                              is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=True)
     page_det_section_labels = []
     for i, merged_coord in enumerate(section_bbox_list):
         left, upper, right, lower = merged_coord
@@ -82,7 +82,7 @@ def crop_pdf_images(args,
         det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         # merge section label
         page_det_section_labels = merge_section_bbox(pdf, word_bbox_list)
-        # pdf.save_draw(image_path)
+        pdf.save_draw(image_path)
         det_section_labels.append(f"{image_path}\t{json.dumps(page_det_section_labels, ensure_ascii=False)}\n")
     # write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
     # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
@@ -108,6 +108,8 @@ def convert_and_crop_pdf_images(args, pdf_name):
     # original pdf data path
     pdf_path = Path(f"{args.pdf_dir}/{pdf_name}.pdf")
     # specify dpi with pdf name
+    if args.dpi_random:
+        args.dpi = random.choice(range(72, 201, 8))
     pdf_name = f"{pdf_name}_{args.dpi}"
     boxed_dir = Path(args.boxed_dir) / pdf_name if args.boxed_dir else None
     cropped_dir = Path(args.cropped_dir) / pdf_name
@@ -131,8 +133,8 @@ def convert_and_crop_pdf_images(args, pdf_name):
     print(f'{pdf_name}.pdf done')
     return det_label, det_section_label, rec_label, invalid_chr_set
 
-def batch_convert_pdf2crop(pool_count, pdf_names, args):
-    pool = Pool(pool_count)
+def batch_convert_pdf2crop(pdf_names, args):
+    pool = Pool(args.pool_count)
     results = {pdf_name:pool.apply_async(convert_and_crop_pdf_images, args=(args, pdf_name)) for pdf_name in pdf_names}
     pool.close()
     pool.join()
@@ -156,6 +158,9 @@ if __name__ == '__main__':
 
     # font, size pdf
     pdf_names = [corpus_pdf_path.stem for corpus_pdf_path in get_file_list(args.pdf_dir)]
+
+    # with open('rec_valid_pdf.txt', 'r', encoding='utf-8') as rec_valid_pdf_file:
+    #     pdf_names = [valid_pdf.strip().strip('.pdf') for valid_pdf in rec_valid_pdf_file.readlines()]
     "어린이 통학로 교통안전 기본계획 용역 중간보고회 결과보고"
     print('pdf length', len(pdf_names))
     pdf_names.sort()
@@ -166,11 +171,12 @@ if __name__ == '__main__':
     
     for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(200, 201)):
         args.dpi = dpi
-        det_label, det_section_label, rec_label = batch_convert_pdf2crop(args.pool_count, pdf_names[pdf_idx:pdf_idx + step], args)
+        pdf_names_sublist = pdf_names[pdf_idx:pdf_idx + step]
+        det_label, det_section_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
         det_section_label_list.append(det_section_label)
-    # write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
+    write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
     # write_label(args.label_dir, det_label_list, 'det_train')
     write_label(args.label_dir, det_section_label_list, 'det_section_train')
     # is_valid_rec_list(f"{args.label_dir}/eng_adminis_eval.txt")

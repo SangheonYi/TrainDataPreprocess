@@ -12,27 +12,26 @@ def init_args():
     parser = argparse.ArgumentParser()
 
     # directories
-    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}converted")
+    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}paper_converted")
     parser.add_argument("--label_dir", type=posix_path_to_str, default=f"{storage_dir}labels")
     parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}cropped")
-    # parser.add_argument("--boxed_dir", type=bool, default=False) # if False not save boxed image
     parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}boxed")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{storage_dir}pdf/papers")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{storage_dir}pdf/det_clean_pdf")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{storage_dir}pdf/issue")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="/mnt/c/Exception/det_clean_file/issue")
-    parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/new_pdf")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/issue")
+    parser.add_argument("--font_dir", type=posix_path_to_str, default="../font_data/fonts")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/new_pdf")
+    parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/corpus_pdf")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/papers")
 
     # pdf2img_option
     parser.add_argument("--fmt", type=str, default="png")
     parser.add_argument("--paths_only", type=bool, default=True)
     parser.add_argument("--timeout", type=int, default=1200)
     parser.add_argument("--thread_count", type=int, default=4)
+    parser.add_argument("--dpi", type=int, default=200)
     parser.add_argument("--last_page", type=int, default=1)
 
     # convert and crop option
     parser.add_argument("--pdf2image_bool", type=bool, default=True)
+    parser.add_argument("--dpi_random", type=bool, default=True)
     parser.add_argument("--crop_line_bool", type=bool, default=False)
     parser.add_argument("--pool_count", type=int, default=os.cpu_count())
     
@@ -48,6 +47,7 @@ def get_pdf2img_option(args):
         "paths_only" : args.paths_only,
         "timeout" : args.timeout,
         "thread_count" : args.thread_count,
+        "dpi" : args.dpi,
         # "last_page" : args.last_page,
     }
 

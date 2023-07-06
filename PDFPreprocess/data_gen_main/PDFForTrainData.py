@@ -103,22 +103,22 @@ class PDFForTrainData():
                     text_to_draw = f'{int_bbox}' if draw_coord else text
                     self.page_draw.text(int_bbox, text_to_draw.strip(), font=ImageFont.truetype("font/Batang.ttf", size=20), fill=font_color)
 
+    def parse_line(self, line):
+        line_text = line.get_text().strip()
+        while '  ' in line_text:
+            line_text = line_text.replace('  ', ' ')
+        line_text = txt2valid_range(line_text)
+        return self.cal_coor(line.bbox), line_text
+    
     def parse_labels(self, line:LTTextLineHorizontal):
         points = []
         crop_list = []
-        # print(line.bbox)
         invalid_line_chrs = set()
-        # self.draw_bboxes("word box", [line.bbox], draw_coord=True, bbox_only=True, box_color='yellow', line_width=3)
+        label_text = []
+        
         if self.crop_line:
-            coor = self.cal_coor(line.bbox)
-            line_text = line.get_text().strip()
-            while '  ' in line_text:
-                line_text = line_text.replace('  ', ' ')
-            line_text = txt2valid_range(line_text)
-            gt_word = line_text
-            label_text = [line_text]
+            coor, gt_word = self.parse_line(line)
         else:
-            label_text = []
             gt_word = ''
             got_left = False
             left, upper, right, lower = 0, 0, 0, 0
@@ -139,9 +139,6 @@ class PDFForTrainData():
                     if not got_left:
                         left, upper, right, lower = space_coor
                         got_left = True
-                    # elif lower > space_coor[3]:
-                    #     lower = space_coor[3]
-                    #     upper -= (lower - upper) * 0.05
                     right = space_coor[2]
                     gt_word = f"{gt_word}{char}"
             coor = [left, upper, right, lower]

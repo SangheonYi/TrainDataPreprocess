@@ -1,17 +1,18 @@
-#-*- coding: utf-8 -*- 
-# doc.py
+import os
+import sys
+from pathlib import Path
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(str(Path(__dir__) / '../util'))
+from option_args import parse_args
+
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph, SimpleDocTemplate
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from itertools import product
-from util.util import create_directories
 from multiprocessing import Pool
-from os import cpu_count
-import os
 from tqdm import tqdm 
-from pathlib import Path
 
 # return splited corpus list by split size(50) lines  
 def get_corpus_list(file, corpus_count):
@@ -54,37 +55,30 @@ def generate_pdf(text, font_path, font_size, doc_path):
     # print(f'corpus_pdf/{doc_name}')
     # print(f'build spent {time.time() - start}')
 
-def batch_convert_co2pdf(pool_count, corpus, font_name_size_product:product, directories={
-        'pdf_dir': 'corpus_pdf',
-        'font_dir': 'font'
-    }):
-    # pool_count = 8
-    pool = Pool(pool_count)
+def batch_convert_co2pdf(corpus, font_name_size_product:product, args):
+    pool = Pool(args.pool_count)
     for font_name, font_size in font_name_size_product:
-        font_path = f"{directories['font_dir']}/{font_name}"
-        doc_path = make_doc_path(directories['pdf_dir'], font_name, font_size, corpus['name'], corpus['idx'])
+        font_path = f"{args.font_dir}/{font_name}"
+        doc_path = make_doc_path(args.pdf_dir, font_name, font_size, corpus['name'], corpus['idx'])
         if not Path(doc_path).exists():
             pool.apply_async(generate_pdf, args=(corpus['text'], font_path, font_size, doc_path))
         else:
-            print('doc is aleady exist')
+            print('\ntarget pdf is aleady exist')
     pool.close()
     pool.join()
 
 if __name__ == '__main__':
+    args = parse_args()
+
     font_sizes = [8, 10, 14, 20, 24]
     font_sizes = [8]
     font_sizes = range(6, 22, 2)
-    font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
     font_names = ['Batang.ttf']
+    font_names = ['Dotum.ttf', 'hy헤드라인m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', '휴먼명조.ttf', 'HY견고딕.ttf']
     corpus_name = 'kor_tech'
     corpus_name = 'eng'
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', 1)
-    pool_count = cpu_count()
-    directories = {
-        'pdf_dir': 'test_pdf',
-        'font_dir': 'font'
-    }
-    create_directories(directories.values())
+
     # generate_pdf("hello 안녕 세계 world", 'font/human_myoungjo.ttf', 8, 'corpus_pdf/test_font_sizes.pdf')
     for corpus_idx, text in tqdm(enumerate(corpus_list), total=len(corpus_list)):
         corpus = {
@@ -92,4 +86,4 @@ if __name__ == '__main__':
             'text': text,
             'name': corpus_name
         }
-        batch_convert_co2pdf(pool_count, corpus, product(font_names, font_sizes), directories=directories)
+        batch_convert_co2pdf(corpus, product(font_names, font_sizes), args)
