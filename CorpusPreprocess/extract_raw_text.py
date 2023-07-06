@@ -1,10 +1,5 @@
 import json
-import os
 from tqdm import tqdm
-
-def create_directory(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
 
 with open("tech_kor_en_train_set.json", 'r', encoding='utf-8') as ori_file:
 # with open("sample.json", 'r', encoding='utf-8') as ori_file:

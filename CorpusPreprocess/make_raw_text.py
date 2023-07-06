@@ -1,10 +1,6 @@
 import json
 import os
 
-def create_directory(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
 def write_raw_txt(corpus_name, list_part, i):
     print(f'writing {i}th')
     with open(f'raw/{corpus_name}_raw{i}.txt', 'w', encoding='utf-8') as raw_text_file:
@@ -16,7 +12,7 @@ def make_for_pdf_corpus(corpus_file_name):
     corpus_name, extend = corpus_file_name.split('.')
     with open(corpus_file_name, 'r', encoding='utf-8') as ori_file:
         print("loading")
-        create_directory('raw')
+        os.makedirs('raw', exist_ok=True)
         cnt_per_dir = 50
         if extend == 'json':
             json_obj = json.load(ori_file)
@@ -26,7 +22,7 @@ def make_for_pdf_corpus(corpus_file_name):
         for i in range((len(data_list) // cnt_per_dir) + 1):
             write_raw_txt(corpus_name, data_list[i * cnt_per_dir : (i + 1) * cnt_per_dir], i)
 
-corpus_file_names = ["tech_kor_en_train_set.json", "wind.txt"]
+corpus_file_names = ["tech_kor_en_train_set.json"]
 
 for corpus_file_name in corpus_file_names:
     make_for_pdf_corpus(corpus_file_name)
