@@ -78,6 +78,8 @@ def make_fonts_dataset(font_name, font_sizes, storage_dir, ramdom_glyph_concat=F
     if support_chars:
         for font_size in font_sizes:
             start = time.time()
+            if font_size not in [8, 10, 24]:
+                font_size = sample_size(font_size, 11, (4, 5))
             font = font_init(font_path, encoding, font_size=font_size)
             save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
             os.makedirs(save_dir, exist_ok=True)
@@ -104,13 +106,12 @@ if __name__ == '__main__':
 
     font_name_list = ['hy헤드라인m']
     font_name_list = ['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕']
-    font_sizes = [10, 15, 20] # eval to small font
-    font_sizes = [27, 47, 66] # 8, 14, 20 pt in 200dpi
-    # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
 
     step_size = 11
+    # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
     font_sizes = [30]
-    font_sizes = [8, 10, 24] + [sample_size(start_point, step_size, (4, 5)) for start_point in range(11, 56, step_size)] 
+    font_sizes = [8, 10, 24] + [start_point for start_point in range(11, 56, step_size)] 
+    
     ramdom_glyph_concat = True
 
     pool_count = os.cpu_count() // 2
