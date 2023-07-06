@@ -35,11 +35,11 @@ def cor2crop(args, font_config, corpus_name, corpus_list, tmp_idx=None):
 
 if __name__ == '__main__':
     args = parse_args()
-    font_sizes = [8, 10, 14, 20] # pt size
     font_sizes = [8]
+    font_sizes = [8, 10, 14, 20] # pt size
+    font_step_size = 11
     font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
     font_names = ['Dotum.ttf']
-    font_names = ['Batang.ttf']
     font_config = list(product(font_names, font_sizes))
     print(font_config)
     # split corpus
