@@ -31,8 +31,7 @@ def cor2crop(args, font_config, corpus_name, corpus_list, tmp_idx=None):
         det_label, det_section_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
-    write_label(args.label_dir, rec_label_list, 'rec_banila_train')
-    write_label(args.label_dir, det_label_list, 'det_train')
+    return rec_label_list, det_label_list
 
 if __name__ == '__main__':
     args = parse_args()
@@ -54,8 +53,16 @@ if __name__ == '__main__':
     step_size = 125
     corpus_list = ["det test data"]
     corpus_range = range(0, corpus_count, step_size)
+    rec_label_list = []
+    det_label_list = []
     for tmp_idx, interval_start in tqdm(enumerate(corpus_range), total=len(corpus_range)):
         with tempfile.TemporaryDirectory() as pdf_tmp_dir, tempfile.TemporaryDirectory() as conv_tmp_dir:
-            cor2crop(args, font_config, corpus_name, corpus_list[interval_start:interval_start + step_size], tmp_idx=tmp_idx)
+            corpus_sublist = corpus_list[interval_start:interval_start + step_size]
+            rec_label_sublist, det_label_sublist = cor2crop(args, font_config, corpus_name, corpus_sublist, tmp_idx=tmp_idx)
+            rec_label_list += rec_label_sublist
+            det_label_list += det_label_sublist
+
+    write_label(args.label_dir, rec_label_list, 'rec_banila_train')
+    write_label(args.label_dir, det_label_list, 'det_train')
     if is_valid_rec_list(f"{args.label_dir}/rec_banila_train.txt"):
         print('😎 rec label is valid!💯')
