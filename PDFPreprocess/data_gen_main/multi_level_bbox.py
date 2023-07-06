@@ -7,6 +7,7 @@ from multiprocessing import Pool
 from pathlib import Path
 import random
 import json
+import os
 
 from OCRUnicodeRange import *
 from itertools import product
@@ -116,9 +117,10 @@ def convert_and_crop_pdf_images(args, pdf_name):
     pdf = PDFForTrainData(pdf_path, args.crop_line_bool, boxed_dir, cropped_dir)
     try:
         converted_list = convert_pdf2img(args, pdf_name, pdf_path)
-    except:
-        print('convert and crop error:', pdf_name)
-        return
+    except Exception as e:
+        print(f'{pdf_name}convert and crop error path: {pdf_path}')
+        print(e)
+        return 
     
     images_size = len(converted_list)
     if images_size == 0:

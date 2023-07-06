@@ -1,5 +1,5 @@
 from generate_pdf import batch_convert_co2pdf, get_corpus_list
-from util.util import get_file_list, is_valid_rec_list
+from util import get_file_list, is_valid_rec_list
 from tqdm import tqdm 
 from multi_level_bbox import batch_convert_pdf2crop, write_label
 from itertools import product
@@ -7,9 +7,7 @@ import tempfile
 from pathlib import Path
 from option_args import parse_args
 
-def cor2crop(args, font_config, corpus_name, corpus_list,
-    tmp_idx=None
-    ):
+def cor2crop(args, font_config, corpus_name, corpus_list, tmp_idx=None):
     # generate tmp pdfs
     for corpus_idx, text in enumerate(corpus_list):
         # print(corpus_idx, text)
@@ -21,7 +19,7 @@ def cor2crop(args, font_config, corpus_name, corpus_list,
         batch_convert_co2pdf(corpus, font_config, args)
 
     # get font, size pdf
-    pdf_names = [corpus_pdf_path.replace(f"{args.pdf_dir}/", '').replace('.pdf', '') 
+    pdf_names = [Path(corpus_pdf_path).stem
     for corpus_pdf_path in get_file_list(args.pdf_dir)]
 
     # convert pdf -> images -> crop images & labels
@@ -30,7 +28,7 @@ def cor2crop(args, font_config, corpus_name, corpus_list,
     step = args.pool_count
     for pdf_idx in range(0, len(pdf_names), step):
         pdf_names_sublist = pdf_names[pdf_idx:pdf_idx + step]
-        det_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
+        det_label, det_section_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
     write_label(args.label_dir, rec_label_list, 'rec_banila_train')
@@ -59,5 +57,5 @@ if __name__ == '__main__':
     for tmp_idx, interval_start in tqdm(enumerate(corpus_range), total=len(corpus_range)):
         with tempfile.TemporaryDirectory() as pdf_tmp_dir, tempfile.TemporaryDirectory() as conv_tmp_dir:
             cor2crop(args, font_config, corpus_name, corpus_list[interval_start:interval_start + step_size], tmp_idx=tmp_idx)
-    if is_valid_rec_list(f"{args['label_dir']}/rec_banila_train.txt"):
+    if is_valid_rec_list(f"{args.label_dir}/rec_banila_train.txt"):
         print('😎 rec label is valid!💯')
