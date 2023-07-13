@@ -75,8 +75,7 @@ if __name__ == '__main__':
     font_sizes = range(6, 22, 2)
     font_names = ['Batang.ttf']
     font_names = ['Dotum.ttf', 'hy헤드라인m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', '휴먼명조.ttf', 'HY견고딕.ttf']
-    corpus_name = 'kor_tech'
-    corpus_name = 'eng'
+    corpus_name = 'raw_corpus'
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', 1)
 
     # generate_pdf("hello 안녕 세계 world", 'font/human_myoungjo.ttf', 8, 'corpus_pdf/test_font_sizes.pdf')

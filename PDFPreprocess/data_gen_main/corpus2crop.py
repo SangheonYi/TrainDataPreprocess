@@ -35,8 +35,8 @@ def cor2crop(args, font_config, corpus_name, corpus_list, tmp_idx=None):
 
 if __name__ == '__main__':
     args = parse_args()
-    font_sizes = [8]
     font_sizes = [8, 10, 14, 20] # pt size
+    font_sizes = [8]
     font_step_size = 11
     font_names = ['NanumMyeongjoExtraBold.ttf', 'Dotum.ttf', 'hy_headline_m.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', ]
     font_names = ['Dotum.ttf']
@@ -46,8 +46,7 @@ if __name__ == '__main__':
     corpus_name = 'wind' # total 1281505, split line size 50
     corpus_count = 25631
     
-    corpus_name = 'kor_tech'
-    corpus_name = 'eng'
+    corpus_name = 'raw_text'
     corpus_count = 1
     corpus_list = get_corpus_list(f'corpus/{corpus_name}.txt', corpus_count)
     step_size = 125

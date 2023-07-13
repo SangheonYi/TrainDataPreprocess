@@ -14,9 +14,13 @@ from itertools import product
 from merge_bbox import merge_overlapping_rectangles, add_merge_margin
 from functools import partial
 import time
-from pprint import pprint
 
 excluded_chr_set = set()
+
+def to_train_path(gen_path):
+    train_path = str(Path(gen_path).as_posix())
+    train_data_dir_idx = train_path.find('train_data')
+    return train_path[train_data_dir_idx:]
 
 def crop_from_page(pdf:PDFForTrainData, cropped_labels):
     crop_idx = 0
@@ -32,7 +36,7 @@ def crop_from_page(pdf:PDFForTrainData, cropped_labels):
         for text, bbox_label, crop_coor in zip(label_text, points, crop_list):
             cropped_path = pdf.cropped_dir / f'{pdf.current_page_num}_{crop_idx}_.png'
             pdf.current_img.crop(crop_coor).save(cropped_path)
-            cropped_labels.append(f'{cropped_path}\t{text}\n')
+            cropped_labels.append(f'{to_train_path(cropped_path)}\t{text}\n')
             page_det_labels.append({"transcription": text, "points": bbox_label})
             crop_idx += 1
     pdf.current_img.close()
@@ -80,12 +84,12 @@ def crop_pdf_images(args,
         # draw bbox feature is commented
         word_bbox_list, page_det_labels, invalid_page_chrs = crop_from_page(pdf, cropped_labels)
         invalid_chr_set = invalid_chr_set.union(invalid_page_chrs)
-        det_labels.append(f"{image_path}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
+        det_labels.append(f"{to_train_path(image_path)}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         # merge section label
         page_det_section_labels = merge_section_bbox(pdf, word_bbox_list)
         pdf.save_draw(image_path)
-        det_section_labels.append(f"{image_path}\t{json.dumps(page_det_section_labels, ensure_ascii=False)}\n")
-    # write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
+        det_section_labels.append(f"{to_train_path(image_path)}\t{json.dumps(page_det_section_labels, ensure_ascii=False)}\n")
+    write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
     # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
 
     # section label
@@ -160,7 +164,6 @@ if __name__ == '__main__':
 
     # font, size pdf
     pdf_names = [corpus_pdf_path.stem for corpus_pdf_path in get_file_list(args.pdf_dir)]
-
     # with open('rec_valid_pdf.txt', 'r', encoding='utf-8') as rec_valid_pdf_file:
     #     pdf_names = [valid_pdf.strip().strip('.pdf') for valid_pdf in rec_valid_pdf_file.readlines()]
     "어린이 통학로 교통안전 기본계획 용역 중간보고회 결과보고"
@@ -171,14 +174,14 @@ if __name__ == '__main__':
     det_section_label_list = []
     step = args.pool_count
     
-    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(200, 201)):
+    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(176, 201, 8)):
         args.dpi = dpi
         pdf_names_sublist = pdf_names[pdf_idx:pdf_idx + step]
         det_label, det_section_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
         det_section_label_list.append(det_section_label)
-    write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
+    # write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
     # write_label(args.label_dir, det_label_list, 'det_train')
     write_label(args.label_dir, det_section_label_list, 'det_section_train')
     # is_valid_rec_list(f"{args.label_dir}/eng_adminis_eval.txt")
