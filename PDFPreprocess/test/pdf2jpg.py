@@ -1,6 +1,8 @@
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path, convert_from_bytes
 from tempfile import TemporaryDirectory
 import time
+from pathlib import Path
+import os
 
 def logging_time(original_fn):
 	def wrapper_fn(*args, **kwargs):
@@ -37,18 +39,25 @@ def pdf2jpg(file_name, **kwargs):
 	return convert_from_path(f"pdf/{file_name}.pdf", **kwargs)
 
 if __name__=="__main__":
-	target = '2022 재난대응 안전한국훈련 기본계획'
+	target = "' 22년 8월 노숙인 의료지원 모니터링 결과 보고 및 진료비 등 지급 건의"
+	target = "a"
+	target = "sample"
+	target = "복사본"
+	target_path = Path(f"C:/Exception/det_clean_file/issue/{target}.pdf")
 	pdf2jpg_option = {
 		"fmt": "jpg",
 		# "single_file": True,
 		# "paths_only": True,
-		"use_pdftocairo": True,
-		"size": (None, 1000),
+		"use_pdftocairo": False,
 		"timeout": 1200, 
 		# "thread_count": 4,
-		"output_folder": ".",
+		"output_folder": Path("D:/train_data"),
 		"output_file": target,
-        # "last_page" : 1
+        "last_page" : 1
 	}
-	convert_from_path(f"{target}.pdf", **pdf2jpg_option)
+	print("check exists path: ", target_path, target_path.exists())
+	# with open(target_path, 'rb') as target_pdf_file:
+	# 	conv_list = convert_from_bytes(target_pdf_file.read(), **pdf2jpg_option)
+	conv_list = convert_from_path(target_path, **pdf2jpg_option)
+	print("conv list: ", conv_list)
 	# pdf2jpg('target', **pdf2jpg_option)
