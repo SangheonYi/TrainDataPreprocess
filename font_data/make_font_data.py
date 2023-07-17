@@ -65,12 +65,14 @@ def append_drawlist(draw_list, sub_label_lines, label_line, draw_meta):
     draw_list.append(draw_meta)
 
 def get_draw_list(support_chars, save_dir, font, font_name, options):
+    global storage_dir
     draw_list = []
     sub_label_lines = []
     if options["is_corpus_draw"]:
         for idx, word in enumerate(get_random_words(corpus_lines, options["k_size"])):
             save_path = f'{save_dir}/{idx}.jpg'
             valid_gt = word.translate(won_dict[font_name])
+            training_path = save_path.replace(storage_dir, "")
             append_drawlist(draw_list, sub_label_lines, f"{save_path}\t{valid_gt}\n", (word, save_path))
     else:
         for idx, target_char in enumerate(support_chars):
@@ -79,7 +81,7 @@ def get_draw_list(support_chars, save_dir, font, font_name, options):
             if font.size < 11 and is_cjk_ideographs(char_code):
                 continue
             save_path = f'{save_dir}/{idx}_{char_code}.jpg'
-            training_path = save_path.replace("/home/sayi/workspace/OCR/PaddleOCR/", "")
+            training_path = save_path.replace(storage_dir, "")
             append_drawlist(draw_list, sub_label_lines, f"{training_path}\t{random_gt}\n", (to_draw_str, save_path))
     return draw_list, sub_label_lines
 
@@ -96,7 +98,7 @@ def make_fonts_dataset(font_name, font_sizes, storage_dir, options):
             if font_size not in [8, 10, 24] and not options["fix_font_size"]:
                 font_size = sample_size(font_size, 11, (4, 5))
             font = font_init(font_path, encoding, font_size=font_size)
-            save_dir = f'{storage_dir}/{font_name}_{font_size}_data'
+            save_dir = f'{storage_dir}font_data_72/{font_name}_{font_size}_data'
             if options["is_corpus_draw"]:
                 save_dir = f'{save_dir}_corpus'
             os.makedirs(save_dir, exist_ok=True)
@@ -120,11 +122,11 @@ if __name__ == '__main__':
     options = {
         "is_corpus_draw": False,
         "k_size": 200,
-        "fix_font_size": False,
+        "fix_font_size": True,
         "ramdom_glyph_concat": True,
     }
 
-    storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/font_data"
+    storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/"
     font_label_list = []
     font_dict_set = set()
 
@@ -135,6 +137,7 @@ if __name__ == '__main__':
     # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
     font_sizes = [34]
     font_sizes = [8, 10, 24] + [start_point for start_point in range(11, 56, step_size)] 
+    font_sizes = list(range(8, 22, 2))
 
     pool_count = os.cpu_count() // 2
     pool_count = pool_count if pool_count > 1 else 1 
