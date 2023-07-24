@@ -1,6 +1,10 @@
 import os
 import time
 from pathlib import Path
+from tarfile import TarFile, TarInfo
+from io import BytesIO
+from typing import List
+from PIL import Image
 
 def create_directory(path):
     os.makedirs(path, exist_ok=True)
@@ -38,3 +42,16 @@ def write_label(label_dir, label_list, label_name):
     label_path = f'{label_dir}/{label_name}.txt'
     with open(label_path, 'w', encoding='utf-8') as label_file:
         label_file.write(label)
+
+def imgs2tar(
+    images: List,
+    format: str = "png",
+):
+    with TarFile.open('C:/train_data/test/imgs.tar.gz', mode="w:gz") as tar:
+        for image, img_path in images:
+            f = BytesIO()
+            image.save(f, format)
+            f.seek(0)
+            info = TarInfo(img_path)
+            info.size = len(f.getbuffer())
+            tar.addfile(info, fileobj=f)

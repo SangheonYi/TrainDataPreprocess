@@ -1,7 +1,7 @@
 from pdf2image import convert_from_path
 from PDFForTrainData import PDFForTrainData
 from tqdm import tqdm
-from util import get_file_list, is_valid_rec_list, write_label
+from util import get_file_list, is_valid_rec_list, write_label, imgs2tar
 from option_args import parse_args, get_pdf2img_option
 from multiprocessing import Pool
 from pathlib import Path
@@ -22,7 +22,7 @@ def to_train_path(gen_path):
     train_data_dir_idx = train_path.find('train_data')
     return train_path[train_data_dir_idx:]
 
-def crop_from_page(pdf:PDFForTrainData, cropped_labels):
+def crop_from_page(pdf:PDFForTrainData, cropped_labels, crop_imgs):
     crop_idx = 0
     word_bbox_list = []
     page_det_labels = []
@@ -35,7 +35,9 @@ def crop_from_page(pdf:PDFForTrainData, cropped_labels):
         pdf.draw_bboxes("word box", crop_list, draw_coord=True, bbox_only=True, box_color='grey', line_width=1)
         for text, bbox_label, crop_coor in zip(label_text, points, crop_list):
             cropped_path = pdf.cropped_dir / f'{pdf.current_page_num}_{crop_idx}_.png'
-            pdf.current_img.crop(crop_coor).save(cropped_path)
+            crop_img = pdf.current_img.crop(crop_coor)
+            crop_img.save(cropped_path)
+            crop_imgs.append((crop_img, to_train_path(cropped_path)))
             cropped_labels.append(f'{to_train_path(cropped_path)}\t{text}\n')
             page_det_labels.append({"transcription": text, "points": bbox_label})
             crop_idx += 1
@@ -78,23 +80,25 @@ def crop_pdf_images(args,
     det_labels = []
     det_section_labels = []
     invalid_chr_set = set()
+    crop_imgs = []
+
     for image_path in tqdm(converted_list, total=total):
         # open img
         pdf.set_crop_target(image_path)
         # draw bbox feature is commented
-        word_bbox_list, page_det_labels, invalid_page_chrs = crop_from_page(pdf, cropped_labels)
+        word_bbox_list, page_det_labels, invalid_page_chrs = crop_from_page(pdf, cropped_labels, crop_imgs)
         invalid_chr_set = invalid_chr_set.union(invalid_page_chrs)
         det_labels.append(f"{to_train_path(image_path)}\t{json.dumps(page_det_labels, ensure_ascii=False)}\n")
         # merge section label
         page_det_section_labels = merge_section_bbox(pdf, word_bbox_list)
         pdf.save_draw(image_path)
         det_section_labels.append(f"{to_train_path(image_path)}\t{json.dumps(page_det_section_labels, ensure_ascii=False)}\n")
-    write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
+    # write_label(args.label_dir, cropped_labels, f'rec_{pdf_name}')
     # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
 
     # section label
     # write_label(args.label_dir, det_labels, f'det_{pdf_name}')
-    return ''.join(det_labels), ''.join(det_section_labels), ''.join(cropped_labels), invalid_chr_set
+    return ''.join(det_labels), ''.join(det_section_labels), ''.join(cropped_labels), invalid_chr_set, crop_imgs
 
 def convert_pdf2img(args, pdf_name, pdf_path):
     converted_dir = Path(args.pdf_converted_dir) / pdf_name
@@ -135,9 +139,9 @@ def convert_and_crop_pdf_images(args, pdf_name):
         "total": images_size,
         "converted_list": converted_list,
     }
-    det_label, det_section_label, rec_label, invalid_chr_set = crop_pdf_images(args, **crop_arg)
+    det_label, det_section_label, rec_label, invalid_chr_set, crop_imgs = crop_pdf_images(args, **crop_arg)
     print(f'{pdf_name}.pdf done')
-    return det_label, det_section_label, rec_label, invalid_chr_set
+    return det_label, det_section_label, rec_label, invalid_chr_set, crop_imgs
 
 def batch_convert_pdf2crop(pdf_names, args):
     pool = Pool(args.pool_count)
@@ -147,14 +151,16 @@ def batch_convert_pdf2crop(pdf_names, args):
     rec_label_list = []
     det_label_list = []
     det_section_label_list = []
+    batch_crop_imgs = []
     global excluded_chr_set
     for pdf_name in pdf_names:
-        det_label, det_section_label, rec_label, invalid_chr_set = results[pdf_name].get()
+        det_label, det_section_label, rec_label, invalid_chr_set, crop_imgs = results[pdf_name].get()
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
         det_section_label_list.append(det_section_label)
         excluded_chr_set = excluded_chr_set.union(invalid_chr_set)
-    return ''.join(det_label_list), ''.join(det_section_label_list), ''.join(rec_label_list)
+        batch_crop_imgs += crop_imgs
+    return ''.join(det_label_list), ''.join(det_section_label_list), ''.join(rec_label_list), batch_crop_imgs
 
 if __name__ == '__main__':
     # pool_count = 8
@@ -163,6 +169,7 @@ if __name__ == '__main__':
     # create_directories(directories.values())
 
     # font, size pdf
+    start = time.time()
     pdf_names = [corpus_pdf_path.stem for corpus_pdf_path in get_file_list(args.pdf_dir)]
     # with open('rec_valid_pdf.txt', 'r', encoding='utf-8') as rec_valid_pdf_file:
     #     pdf_names = [valid_pdf.strip().strip('.pdf') for valid_pdf in rec_valid_pdf_file.readlines()]
@@ -173,17 +180,23 @@ if __name__ == '__main__':
     rec_label_list = []
     det_section_label_list = []
     step = args.pool_count
+    total_crop_imgs = []
     
-    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(176, 201, 8)):
+    for pdf_idx, dpi in product(range(0, len(pdf_names), step), range(72, 73)):
         args.dpi = dpi
         pdf_names_sublist = pdf_names[pdf_idx:pdf_idx + step]
-        det_label, det_section_label, rec_label = batch_convert_pdf2crop(pdf_names_sublist, args)
+        det_label, det_section_label, rec_label, batch_crop_imgs = batch_convert_pdf2crop(pdf_names_sublist, args)
         rec_label_list.append(rec_label)
         det_label_list.append(det_label)
         det_section_label_list.append(det_section_label)
-    # write_label(args.label_dir, rec_label_list, 'eng_adminis_eval')
+        total_crop_imgs += batch_crop_imgs
+    print(f"cropped img spent: {time.time() - start}")
+    start = time.time()
+    imgs2tar(total_crop_imgs, 'png')
+    print(f"tar img spent: {time.time() - start}")
+    write_label(args.label_dir, rec_label_list, 'rec_72dpi')
     # write_label(args.label_dir, det_label_list, 'det_train')
-    write_label(args.label_dir, det_section_label_list, 'det_section_train')
+    # write_label(args.label_dir, det_section_label_listv, 'det_section_train')
     # is_valid_rec_list(f"{args.label_dir}/eng_adminis_eval.txt")
     print("all pdf converted")
     print("excluded_chr_set:", sorted(excluded_chr_set))

@@ -8,6 +8,7 @@ def posix_path_to_str(path_arg):
 
 def init_args():
     storage_dir = "/mnt/d/train_data/pdf/"
+    storage_dir = "C:/train_data/test/"
     storage_dir = "D:/train_data/pdf/"
     parser = argparse.ArgumentParser()
 
@@ -16,14 +17,16 @@ def init_args():
     parser.add_argument("--font_dir", type=posix_path_to_str, default="../font_data/fonts")
 
     # debug directries
+    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
+    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
+    parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/boxed")
     # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/issue")
-    # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}boxed")
 
     # crawling pdf directories
     # parser.add_argument("--boxed_dir", type=bool, default=False)
     # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
     # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/new_pdf")
+    parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/new_pdf")
 
     # corpus directories
     # parser.add_argument("--boxed_dir", type=bool, default=False)
@@ -32,10 +35,10 @@ def init_args():
     # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/corpus_pdf")
 
     # eng eval directories
-    parser.add_argument("--boxed_dir", type=bool, default=False)
-    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_converted")
-    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_cropped")
-    parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/issue")
+    # parser.add_argument("--boxed_dir", type=bool, default=False)
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/issue")
 
     # pdf2img_option
     parser.add_argument("--fmt", type=str, default="png")
@@ -46,7 +49,7 @@ def init_args():
     parser.add_argument("--last_page", type=int, default=1)
 
     # convert and crop option
-    parser.add_argument("--pdf2image_bool", type=bool, default=True)
+    parser.add_argument("--pdf2image_bool", type=bool, default=False)
     parser.add_argument("--dpi_random", type=bool, default=False)
     parser.add_argument("--crop_line_bool", type=bool, default=False)
     parser.add_argument("--pool_count", type=int, default=os.cpu_count())
@@ -64,7 +67,7 @@ def get_pdf2img_option(args):
         "timeout" : args.timeout,
         "thread_count" : args.thread_count,
         "dpi" : args.dpi,
-        "last_page" : args.last_page,
+        # "last_page" : args.last_page,
     }
 
 if __name__ == '__main__':
