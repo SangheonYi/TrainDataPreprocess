@@ -192,7 +192,7 @@ if __name__ == '__main__':
         total_crop_imgs += batch_crop_imgs
     print(f"cropped img spent: {time.time() - start}")
     start = time.time()
-    imgs2tar(total_crop_imgs, 'png')
+    imgs2tar(total_crop_imgs, 'C:/train_data/test/rec_crop_imgs.tar.gz')
     print(f"tar img spent: {time.time() - start}")
     write_label(args.label_dir, rec_label_list, 'rec_72dpi')
     # write_label(args.label_dir, det_label_list, 'det_train')

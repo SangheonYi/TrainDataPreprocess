@@ -4,7 +4,6 @@ from pathlib import Path
 from tarfile import TarFile, TarInfo
 from io import BytesIO
 from typing import List
-from PIL import Image
 
 def create_directory(path):
     os.makedirs(path, exist_ok=True)
@@ -45,9 +44,10 @@ def write_label(label_dir, label_list, label_name):
 
 def imgs2tar(
     images: List,
+    dest_path: str,
     format: str = "png",
 ):
-    with TarFile.open('C:/train_data/test/imgs.tar.gz', mode="w:gz") as tar:
+    with TarFile.open(dest_path, mode="w:gz") as tar:
         for image, img_path in images:
             f = BytesIO()
             image.save(f, format)
