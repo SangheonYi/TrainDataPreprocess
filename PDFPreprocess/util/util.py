@@ -42,16 +42,14 @@ def write_label(label_dir, label_list, label_name):
     with open(label_path, 'w', encoding='utf-8') as label_file:
         label_file.write(label)
 
-def imgs2tar(
+def write_imgs2tar(
     images: List,
-    dest_path: str,
-    format: str = "png",
+    tar: TarFile,
 ):
-    with TarFile.open(dest_path, mode="w:gz") as tar:
-        for image, img_path in images:
-            f = BytesIO()
-            image.save(f, format)
-            f.seek(0)
-            info = TarInfo(img_path)
-            info.size = len(f.getbuffer())
-            tar.addfile(info, fileobj=f)
+    for image, img_path in images:
+        f = BytesIO()
+        image.save(f, "png")
+        f.seek(0)
+        info = TarInfo(img_path)
+        info.size = len(f.getbuffer())
+        tar.addfile(info, fileobj=f)

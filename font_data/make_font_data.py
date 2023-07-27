@@ -6,10 +6,9 @@ from multiprocessing import Pool, Queue, Process
 from scipy.stats import loguniform
 import random
 import time
-from tarfile import TarFile, TarInfo
-from io import BytesIO
+from tarfile import TarFile
 
-from util import get_random_words, corpus_lines, write_imgs2tar, grouper, get_args
+from util import get_random_words, get_corpus_lines, write_imgs2tar, grouper, get_args
 from DataCollector import DataCollector
 from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range
 
@@ -37,7 +36,7 @@ def make_font_data(draw_list, font):
 
         # save image
         # image.save(save_path)
-        # data_que.put((image, training_path))
+        data_que.put((image, training_path))
 
 def update_dict(support_chars, encoding):
     return set(support_chars) if encoding.startswith("utf") else set()
@@ -69,6 +68,7 @@ def append_drawlist(draw_list, sub_label_lines, valid_gt, to_draw_str, save_path
 
 def get_draw_list(support_chars, save_dir, font_name, label_lines):
     global config_args
+    global corpus_lines
 
     draw_list = []
     os.makedirs(save_dir, exist_ok=True)
@@ -105,20 +105,19 @@ def make_fonts_dataset(font_name):
             draw_list = get_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
             # generate font data
             make_font_data(draw_list, font)
-            print(f"font: {font_name}, font size: {font_size} done, spent: {time.time() - start}")
+            print(f"font: {font_name}, font size: {font_size} done")
     else:
         print(f"{font_path} is empty")
-    # data_que.put(font_name)
+    data_que.put(font_name)
     return label_lines, update_dict(support_chars, encoding)
 
 def run_collector(data_que):
     global config_args
-    start = time.time()
-
-    with TarFile.open(config_args.tar_path, mode="w:gz") as tar:
+    mode = 'w:gz'
+    print(f"tar mode: {mode}")
+    with TarFile.open(config_args.tar_path, mode=mode) as tar:
         collector = DataCollector(data_que, set(config_args.font_name_list))
         collector.collect(tar)
-    print("write spent:", time.time() - start)
 
 def run_pool(pool_count):
     pool = Pool(pool_count)
@@ -131,6 +130,8 @@ def run_pool(pool_count):
 
 if __name__ == '__main__':
     config_args = get_args()
+    if config_args.is_corpus_draw:
+        corpus_lines = get_corpus_lines("../CorpusPreprocess/corpus/raw_text.txt")
     data_que = Queue()
     font_label_list = []
     font_dict_set = set()
@@ -148,8 +149,9 @@ if __name__ == '__main__':
             label_lines, korean_dict = results[font_name].get()
             font_label_list += label_lines
             font_dict_set = font_dict_set.union(korean_dict)
+    print(f"dataset size: {len(font_label_list)}")
+    print("data zipping")
     wirter_process.join()
-    print("dataset size: ", len(font_label_list))
     label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train.txt'
     write_font_label_file(label_name, font_label_list)
     with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:

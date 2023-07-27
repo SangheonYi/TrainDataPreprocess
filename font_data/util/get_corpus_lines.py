@@ -14,10 +14,10 @@ def get_random_words(corpus_lines, k_size):
             random_words = random_words.union(corpus_line.split())
     return random_words
 
-corpus_lines = get_corpus_lines("../CorpusPreprocess/corpus/raw_text.txt")
-
 if __name__ == "__main__":
     count = 0
+    corpus_lines = get_corpus_lines("../CorpusPreprocess/corpus/raw_text.txt")
+
     for k in range(50, 100):
         for i in range(1):
             count += len(get_random_words(corpus_lines, k))
