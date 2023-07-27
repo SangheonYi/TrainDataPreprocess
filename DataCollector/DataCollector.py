@@ -1,7 +1,6 @@
 from multiprocessing import Queue
 from tarfile import TarFile, TarInfo
 from io import BytesIO
-
 class DataCollector:
     def __init__(self, q:Queue, target_processes:set):
         self.q = q
