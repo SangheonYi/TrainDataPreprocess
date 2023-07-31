@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append("..")
 from PIL import Image, ImageDraw, ImageFont
-from multiprocessing import Pool, Queue, Process
+from multiprocessing import Pool, Process
 from scipy.stats import loguniform
 import random
 import time
@@ -20,7 +20,7 @@ def font_init(font_path, encoding, fix_font_size, font_size=10):
     return font, font_size
 
 def make_font_data(draw_list, font):
-    global data_que
+    global collector
 
     for text_to_draw, save_path, training_path in draw_list:
         W = int(font.getlength(text_to_draw) + 2)
@@ -36,7 +36,7 @@ def make_font_data(draw_list, font):
 
         # save image
         # image.save(save_path)
-        data_que.put((image, training_path))
+        collector.img_q.put((image, training_path))
 
 def update_dict(support_chars, encoding):
     return set(support_chars) if encoding.startswith("utf") else set()
@@ -87,6 +87,7 @@ def get_draw_list(support_chars, save_dir, font_name, label_lines):
 
 def make_fonts_dataset(font_name):
     global config_args
+    global collector
 
     label_lines = []
     font_path = f"fonts/{font_name}.ttf"
@@ -108,15 +109,15 @@ def make_fonts_dataset(font_name):
             print(f"font: {font_name}, font size: {font_size} done")
     else:
         print(f"{font_path} is empty")
-    data_que.put(font_name)
+    collector.img_q.put(font_name)
     return label_lines, update_dict(support_chars, encoding)
 
-def run_collector(data_que):
+def run_collector(collector):
     global config_args
+
     mode = 'w:gz'
     print(f"tar mode: {mode}")
     with TarFile.open(config_args.tar_path, mode=mode) as tar:
-        collector = DataCollector(data_que, set(config_args.font_name_list))
         collector.collect(tar)
 
 def run_pool(pool_count):
@@ -132,13 +133,13 @@ if __name__ == '__main__':
     config_args = get_args()
     if config_args.is_corpus_draw:
         corpus_lines = get_corpus_lines("../CorpusPreprocess/corpus/raw_text.txt")
-    data_que = Queue()
     font_label_list = []
     font_dict_set = set()
     pool_count = min(config_args.pool_count, len(config_args.font_name_list))
     if pool_count == os.cpu_count():
         pool_count -= 1 
-    wirter_process = Process(target=run_collector, args=(data_que,))
+    collector = DataCollector(config_args.font_name_list)
+    wirter_process = Process(target=run_collector, args=(collector,))
     wirter_process.start()
     print(f"pool count: {pool_count}")
     for font_name_sub_list in grouper(config_args.font_name_list, pool_count, fillvalue=None):

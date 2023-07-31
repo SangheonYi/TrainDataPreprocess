@@ -15,7 +15,7 @@ def get_args():
     storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/test/"
     os.makedirs(storage_dir, exist_ok=True)
     parser.add_argument("--storage_dir", type=posix_path_to_str, default=storage_dir)
-    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}/font_data.tar")
+    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}/font_data.tar.gz")
 
     # font config
     # parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕'])
