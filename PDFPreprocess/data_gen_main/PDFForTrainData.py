@@ -33,8 +33,9 @@ def get_OOV(text):
     return set(text) - sayi_vocab
 
 class PDFForTrainData():
-    def __init__(self, pdf_path, crop_line_bool:bool, boxed_dir, cropped_dir) -> None:
+    def __init__(self, pdf_name, pdf_path, crop_line_bool:bool, boxed_dir, cropped_dir) -> None:
         # pdf init
+        self.pdf_name = pdf_name
         self.fp = open(pdf_path, 'rb')
         self.rsrcmgr = PDFResourceManager()
         self.laparams = LAParams()
