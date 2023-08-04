@@ -1,2 +1,3 @@
-from DataCollector.DataCollector import DataCollector
-__all__ = ['DataCollector']
+from DataCollector.DataCollector import DataCollector, run_collector
+
+__all__ = ['DataCollector', 'run_collector']

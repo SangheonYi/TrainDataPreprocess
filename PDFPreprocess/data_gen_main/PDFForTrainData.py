@@ -11,6 +11,7 @@ import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(str(Path(__dir__) / '../util'))
 from recog_valid_unicode import txt2valid_range
+from OCRLabels import OCRLabels
 
 with open('sayi_dict.txt', 'r', encoding='utf-8') as sayi_dict:
     sayi_vocab = set([line[0] for line in sayi_dict.readlines()])
@@ -25,12 +26,6 @@ def append_label_list(coor, points, crop_list, gt_word, gt_list):
     crop_list.append(coor)
     gt_list.append(gt_word)
     return
-
-def get_OOV(text):
-    # global unuse_chars
-    # unuse_chars
-    # return be true when set(text) - sayi_vocab is empty set
-    return set(text) - sayi_vocab
 
 class PDFForTrainData():
     def __init__(self, pdf_name, pdf_path, crop_line_bool:bool, boxed_dir, cropped_dir) -> None:
@@ -56,6 +51,13 @@ class PDFForTrainData():
         self.current_img = None
         self.current_page_num = 0
 
+        # ocr data
+        self.invalid_chr_set = set()
+        self.ocr_labels = OCRLabels()
+
+    def set_invalid_chr_set(self, text):
+        self.invalid_chr_set |= set(text) - sayi_vocab
+    
     def cal_coor(self, bbox):
         # image size에 맞게 bbox 비율 고려해야 함
         page_height = self.current_page.mediabox[-1]
@@ -114,9 +116,7 @@ class PDFForTrainData():
     def parse_labels(self, line:LTTextLineHorizontal):
         points = []
         crop_list = []
-        invalid_line_chrs = set()
         label_text = []
-        
         if self.crop_line:
             coor, gt_word = self.parse_line(line)
         else:
@@ -130,11 +130,11 @@ class PDFForTrainData():
                 # if char not in target_chr:
                 if char == ' ' or char not in sayi_vocab: # both LTchr and LTAnno have get_text() and can be blank character
                     if got_left:
+                        self.set_invalid_chr_set(gt_word)
                         coor = [left, upper, right, lower]
-                        invalid_line_chrs = invalid_line_chrs.union(get_OOV(gt_word))
                         append_label_list(coor, points, crop_list, gt_word, label_text)
                         gt_word = ''
-                    got_left = False
+                        got_left = False
                 elif isinstance(ltchr, LTChar) :
                     space_coor = self.cal_coor(ltchr.bbox)
                     if not got_left:
@@ -143,6 +143,6 @@ class PDFForTrainData():
                     right = space_coor[2]
                     gt_word = f"{gt_word}{char}"
             coor = [left, upper, right, lower]
-        invalid_line_chrs = invalid_line_chrs.union(get_OOV(gt_word))
+        self.set_invalid_chr_set(gt_word)
         append_label_list(coor, points, crop_list, gt_word, label_text)
-        return label_text, points, crop_list, invalid_line_chrs
+        return label_text, points, crop_list

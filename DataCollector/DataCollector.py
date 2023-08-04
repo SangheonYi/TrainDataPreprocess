@@ -3,9 +3,9 @@ from tarfile import TarFile, TarInfo
 from io import BytesIO
 
 class DataCollector:
-    def __init__(self, target_processes):
-        self.img_q = Queue()
-        self.target_processes = set(target_processes)
+    def __init__(self, end_count, q):
+        self.img_q = q
+        self.end_count = end_count
     
     def write_data2tar(self, tar:TarFile, data:tuple):
         img, img_path = data
@@ -16,16 +16,19 @@ class DataCollector:
         info.size = len(f.getbuffer())
         tar.addfile(info, fileobj=f)
 
-    def collect(self, tar:TarFile):
-        while self.target_processes:
-            while not self.img_q.empty():
-                img = self.img_q.get()
-                if isinstance(img, tuple):
-                    self.write_data2tar(tar, img)
-                else:
-                    try :
-                        self.target_processes.remove(img)
-                        print(f"remain target: {self.target_processes}")
-                    except:
-                        print(f"data error: data collector got: {img}, remain target: {self.target_processes}")
-                        exit()
+    def collect(self, tar_path, mode):
+        with TarFile.open(tar_path, mode=mode) as tar:
+            while self.end_count > 0:
+                while not self.img_q.empty():
+                    img = self.img_q.get()
+                    if isinstance(img, tuple):
+                        self.write_data2tar(tar, img)
+                    elif img == 'end':
+                        self.end_count -= 1
+                    else:
+                        raise Exception(f"data error: data collector got: {img}, remain child count: {self.end_count}")
+
+def run_collector(tar_path, collector: DataCollector):
+    mode = 'w:gz'
+    print(f"tar mode: {mode}")
+    collector.collect(tar_path, mode)
