@@ -6,6 +6,7 @@ from pdfminer.layout import LTTextBoxHorizontal, LTTextLineHorizontal, LTChar
 
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
+from multiprocessing import Queue
 import os
 import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +29,7 @@ def append_label_list(coor, points, crop_list, gt_word, gt_list):
     return
 
 class PDFForTrainData():
-    def __init__(self, pdf_name, pdf_path, crop_line_bool:bool, boxed_dir, cropped_dir) -> None:
+    def __init__(self, pdf_name, pdf_path, crop_line_bool:bool, boxed_dir, cropped_dir, img_q: Queue) -> None:
         # pdf init
         self.pdf_name = pdf_name
         self.fp = open(pdf_path, 'rb')
@@ -54,6 +55,7 @@ class PDFForTrainData():
         # ocr data
         self.invalid_chr_set = set()
         self.ocr_labels = OCRLabels()
+        self.img_q = img_q
 
     def set_invalid_chr_set(self, text):
         self.invalid_chr_set |= set(text) - sayi_vocab

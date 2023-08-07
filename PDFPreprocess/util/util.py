@@ -5,6 +5,11 @@ from tarfile import TarFile, TarInfo
 from io import BytesIO
 from typing import List
 
+def to_train_path(gen_path):
+    train_path = str(Path(gen_path).as_posix())
+    train_data_dir_idx = train_path.find('train_data')
+    return train_path[train_data_dir_idx:]
+
 def create_directory(path):
     os.makedirs(path, exist_ok=True)
     

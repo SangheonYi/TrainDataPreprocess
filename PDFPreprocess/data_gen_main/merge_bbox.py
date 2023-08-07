@@ -1,3 +1,32 @@
+from PDFForTrainData import PDFForTrainData
+from functools import partial
+
+def margin_and_merge_bbox(low_level_bbox_list, margin_rate, pdf: PDFForTrainData,
+                           is_horizon=True, margin_box_color='red', merged_box_color='green', draw_margin_box=False, draw_high_level_box=False):
+    add_merge_margin_partial = partial(add_merge_margin, margin_rate=margin_rate, is_horizon=is_horizon)
+    margined_bbox_list = list(map(add_merge_margin_partial, low_level_bbox_list))
+    high_level_bbox_list = merge_overlapping_rectangles(margined_bbox_list)
+    if draw_margin_box:
+        pdf.draw_bboxes("margined box", margined_bbox_list, box_color=margin_box_color, line_width=8)
+    if draw_high_level_box:
+        pdf.draw_bboxes("high_level_coord", high_level_bbox_list, box_color=merged_box_color, line_width=6)
+    return high_level_bbox_list
+
+def merge_section_bbox(pdf: PDFForTrainData, word_bbox_list):
+    # draw word box
+    pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
+    # merge horizontal
+    line_bbox_list = margin_and_merge_bbox(word_bbox_list, 0.23, pdf)
+    # merge vertical
+    section_bbox_list = margin_and_merge_bbox(line_bbox_list, 0.3, pdf, 
+                                              is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=True)
+    det_section_labels = []
+    for i, merged_coord in enumerate(section_bbox_list):
+        left, upper, right, lower = merged_coord
+        section_gt = [[int(left), int(upper)], [int(right), int(upper)], [int(right), int(lower)], [int(left), int(lower)]]
+        det_section_labels.append({"transcription": f"section {i}", "points": section_gt})
+    return det_section_labels
+
 def add_merge_margin(rectangle, margin_rate, is_horizon=True):
     left, upper, right, lower = rectangle
     margin = (lower - upper) * margin_rate
