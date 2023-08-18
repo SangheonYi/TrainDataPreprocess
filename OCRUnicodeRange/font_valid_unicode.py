@@ -61,11 +61,12 @@ def convert_won_glyph(src_str: str, font_won_dict: dict):
 def is_valid_decimal(font_name, i, exclude_unicodes_list):
     if "견고딕" == font_name:
         return i not in gngt_empty_glyph_list
+    # exclude unuse unicode-level glyph
     elif not chr(i).isprintable() or i in exclude_unicodes_list:
         return False
-    # check font glyph
+    # check font-level invalid glyph
     if font_name in ttf_exclude_glyph.keys():
-        return i not in ttf_exclude_glyph[font_name] or i in partial_include
+        return i not in ttf_exclude_glyph[font_name]
     print(f"decimal is not valid, {font_name} is unknown font")
     return False
 

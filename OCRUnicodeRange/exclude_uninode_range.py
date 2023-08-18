@@ -30,7 +30,9 @@ exclude_unicodes = {
     # Latin_Extended_Additional 0x1E00, 0x1EFF pass
     "Latin_Extended_Additional": r2l(0x1E00, 0x1EFF),
     # General_Punctuation 0x2000, 0x206F
-    "General_Punctuation": r2l(0x2000, 0x206F),
+    # "General_Punctuation": r2l(0x2000, 0x206F),
+    "General_Punctuation": list(set(r2l(0x2000, 0x206F)) - {0x2018, 0x2019, 0x201C, 0x201D, 0x2030, 0x2031, 0x203B, 0x204B}),
+    
     # Superscripts_and_Subscripts 0x2070, 0x209F 
     "Superscripts_and_Subscripts": r2l(0x2070, 0x209F),
     # Currency_Symbols 0x20A0, 0x20CF
