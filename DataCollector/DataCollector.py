@@ -27,8 +27,3 @@ class DataCollector:
                         self.end_count -= 1
                     else:
                         raise Exception(f"data error: data collector got: {img}, remain child count: {self.end_count}")
-
-def run_collector(tar_path, collector: DataCollector):
-    mode = 'w:gz'
-    print(f"tar mode: {mode}")
-    collector.collect(tar_path, mode)
