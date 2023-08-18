@@ -2,13 +2,12 @@ import os
 import sys
 sys.path.append("..")
 from PIL import Image, ImageDraw, ImageFont
-from multiprocessing import Pool, Process
+from multiprocessing import Pool, Process, Manager
 from scipy.stats import loguniform
 import random
 import time
-from tarfile import TarFile
 
-from util import get_random_words, get_corpus_lines, write_imgs2tar, grouper, get_args
+from util import get_random_words, get_corpus_lines, get_args
 from DataCollector import DataCollector
 from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range
 
@@ -19,9 +18,7 @@ def font_init(font_path, encoding, fix_font_size, font_size=10):
     font = ImageFont.truetype(font_path, size=font_size, encoding=encode_type)
     return font, font_size
 
-def make_font_data(draw_list, font):
-    global collector
-
+def make_font_data(draw_list, font, img_q):
     for text_to_draw, save_path, training_path in draw_list:
         W = int(font.getlength(text_to_draw) + 2)
         text_coord = (1, 0)
@@ -36,7 +33,9 @@ def make_font_data(draw_list, font):
 
         # save image
         # image.save(save_path)
-        collector.img_q.put((image, training_path))
+        if (image, training_path) == None:
+            print("😀", save_path, text_to_draw)
+        img_q.put((image, training_path))
 
 def update_dict(support_chars, encoding):
     return set(support_chars) if encoding.startswith("utf") else set()
@@ -85,10 +84,7 @@ def get_draw_list(support_chars, save_dir, font_name, label_lines):
             append_drawlist(draw_list, label_lines, random_gt, to_draw_str, save_path)
     return draw_list
 
-def make_fonts_dataset(font_name):
-    global config_args
-    global collector
-
+def make_fonts_dataset(config_args, font_name, img_q):
     label_lines = []
     font_path = f"fonts/{font_name}.ttf"
     support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
@@ -105,26 +101,17 @@ def make_fonts_dataset(font_name):
                 save_dir = f'{save_dir}_corpus'
             draw_list = get_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
             # generate font data
-            make_font_data(draw_list, font)
+            make_font_data(draw_list, font, img_q)
             print(f"font: {font_name}, font size: {font_size} done")
     else:
         print(f"{font_path} is empty")
-    collector.img_q.put(font_name)
     return label_lines, update_dict(support_chars, encoding)
 
-def run_collector(collector):
-    global config_args
-
-    mode = 'w:gz'
-    print(f"tar mode: {mode}")
-    with TarFile.open(config_args.tar_path, mode=mode) as tar:
-        collector.collect(tar)
-
-def run_pool(pool_count):
+def run_pool(config_args, pool_count, img_q):
     pool = Pool(pool_count)
     results = dict()
     for font_name in font_name_sub_list:
-        results[font_name] = pool.apply_async(make_fonts_dataset, args=(font_name, )) 
+        results[font_name] = pool.apply_async(make_fonts_dataset, args=(config_args, font_name, img_q)) 
     pool.close()
     pool.join()
     return results
@@ -138,21 +125,29 @@ if __name__ == '__main__':
     pool_count = min(config_args.pool_count, len(config_args.font_name_list))
     if pool_count == os.cpu_count():
         pool_count -= 1 
-    collector = DataCollector(config_args.font_name_list)
-    wirter_process = Process(target=run_collector, args=(collector,))
-    wirter_process.start()
-    print(f"pool count: {pool_count}")
-    for font_name_sub_list in grouper(config_args.font_name_list, pool_count, fillvalue=None):
-        font_name_sub_list = [font_name for font_name in font_name_sub_list if font_name is not None]
-        pool_count = min(pool_count, len(font_name_sub_list))
-        results = run_pool(pool_count)
-        for font_name in font_name_sub_list:
-            label_lines, korean_dict = results[font_name].get()
-            font_label_list += label_lines
-            font_dict_set = font_dict_set.union(korean_dict)
-    print(f"dataset size: {len(font_label_list)}")
-    print("data zipping")
-    wirter_process.join()
+
+    with Manager() as manager:
+        img_q = manager.Queue()
+        sub_group_count = len(config_args.font_name_list) // pool_count
+        if len(config_args.font_name_list) % pool_count > 0:
+            sub_group_count += 1
+        collector = DataCollector(sub_group_count, img_q)
+        wirter_process = Process(target=collector.collect, args=(config_args.tar_path, 'w:gz'))
+        wirter_process.start()
+        print(f"pool count: {pool_count}")
+        for sub_group_idx in range(sub_group_count):
+            start_font_idx = sub_group_idx * pool_count
+            font_name_sub_list = config_args.font_name_list[start_font_idx:start_font_idx + pool_count]
+            pool_count = min(pool_count, len(font_name_sub_list))
+            results = run_pool(config_args, pool_count, img_q)
+            for font_name in font_name_sub_list:
+                label_lines, korean_dict = results[font_name].get()
+                font_label_list += label_lines
+                font_dict_set = font_dict_set.union(korean_dict)
+            img_q.put('end')
+        print(f"dataset size: {len(font_label_list)}")
+        print("data zipping")
+        wirter_process.join()
     label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train.txt'
     write_font_label_file(label_name, font_label_list)
     with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
