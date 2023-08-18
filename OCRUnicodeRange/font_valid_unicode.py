@@ -1,6 +1,5 @@
 from OCRUnicodeRange.util import r2l
 from fontTools.ttLib import TTFont
-from OCRUnicodeRange import partial_include
 
 # 견고딕은 인코딩 이슈가 자주 발생하는 euc-kr이고 문자 셋도 적어서 제외하고 HY견고딕로 대체하는 편이다.
 font_path_list = ['휴먼명조.ttf', 'Dotum.ttf', 'hy헤드라인m.ttf', '견고딕.ttf', 'Gungsuh.ttf', 'Batang.ttf', 'Gulim.ttf', 'HY견고딕.ttf']
