@@ -312,7 +312,7 @@ middledot_dict = {
     0xff65: chr(0x00b7), # ･ · specials katakana middle dot 
 }
 
-ascii_to_half_full = {chr(0xff00 + ascii_code - 32):chr(ascii_code) for ascii_code in range(33, 127)}
+ascii_to_half_full = {0xff00 + ascii_code - 32:chr(ascii_code) for ascii_code in range(33, 127)}
 
 empty_circle = {
     # ○ Geometric Shapes white circle 0x25cb
@@ -352,9 +352,9 @@ black_squre = { # end of proof
     0x25fe:chr(0x25a0), # ◾ ■ Geometric Shapes Black Medium Small Square
 }
 
-dingbats_to_enclosed = { chr(encl + 800) : chr(encl) for encl in range(0x2460, 0x246A)}
+dingbats_to_enclosed = { encl + 800 : chr(encl) for encl in range(0x2460, 0x246A)}
 
-dingbats_negative_circled = { chr(neg_circ + 20) : chr(neg_circ) for neg_circ in range(0x2776, 0x2780)}
+dingbats_negative_circled = { neg_circ + 20 : chr(neg_circ) for neg_circ in range(0x2776, 0x2780)}
 dingbats_to_arrows = {
     0x2794:chr(0x2192), # ➔ → Dingbats Heavy Wide-Headed Rightwards Arrow
     0x279c:chr(0x2192), # ➜ → Dingbats Heavy Round-Tipped Rightwards Arrow
