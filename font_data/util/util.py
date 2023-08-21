@@ -18,14 +18,14 @@ def get_args():
     parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}/font_data.tar.gz")
 
     # font config
-    # parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕'])
-    parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum'])
+    parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕'])
+    # parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum'])
     # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
     # parser.add_argument("--font_sizes", type=list, default=[8, 10, 24])
     parser.add_argument("--font_sizes", type=list, default=[8])
 
     # option
-    parser.add_argument("--is_corpus_draw", type=bool, default=True)
+    parser.add_argument("--is_corpus_draw", type=bool, default=False)
     parser.add_argument("--fix_font_size", type=bool, default=True)
     parser.add_argument("--ramdom_glyph_concat", type=bool, default=True)
     parser.add_argument("--k_size", type=int, default=200)
