@@ -9,7 +9,7 @@ import time
 
 from util import get_random_words, get_corpus_lines, get_args
 from DataCollector import DataCollector
-from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range
+from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range, convert_dict_list
 
 def font_init(font_path, encoding, fix_font_size, font_size=10):
     if font_size not in [8, 10, 24] and not fix_font_size:
@@ -151,5 +151,6 @@ if __name__ == '__main__':
     label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train.txt'
     write_font_label_file(label_name, font_label_list)
     with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
-        for e in sorted(font_dict_set):
-            kor_dict_file.write(f"{e}\n")
+        for inv_char_table in convert_dict_list:
+            font_dict_set |= set(inv_char_table.values())
+        kor_dict_file.write('\n'.join(sorted(list(font_dict_set))))
