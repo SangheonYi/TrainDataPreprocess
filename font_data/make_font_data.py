@@ -7,7 +7,7 @@ from scipy.stats import loguniform
 import random
 import time
 
-from util import get_random_words, get_corpus_lines, get_args
+from util import get_random_words, get_corpus_words, get_args
 from DataCollector import DataCollector
 from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range, convert_dict_list
 
@@ -31,7 +31,7 @@ def make_font_data(draw_list, font, img_q):
         draw = ImageDraw.Draw(image)
         draw.text(text_coord, text_to_draw, font=font, fill="black")
 
-        # save image
+        # save image directly
         # image.save(save_path)
         if (image, training_path) == None:
             print("😀", save_path, text_to_draw)
@@ -67,12 +67,15 @@ def append_drawlist(draw_list, sub_label_lines, valid_gt, to_draw_str, save_path
 
 def get_draw_list(support_chars, save_dir, font_name, label_lines):
     global config_args
-    global corpus_lines
+    global corpus_words
 
     draw_list = []
     os.makedirs(save_dir, exist_ok=True)
     if config_args.is_corpus_draw:
-        for idx, word in enumerate(get_random_words(corpus_lines, config_args.k_size)):
+        support_char_set = set(support_chars)
+        for idx, word in enumerate(get_random_words(corpus_words, config_args.random_word_count)):
+            if set(word) - support_char_set:
+                continue
             save_path = f'{save_dir}/{idx}.jpg'
             valid_gt = word.translate(won_dict[font_name])
             append_drawlist(draw_list, label_lines, valid_gt, word, save_path)
@@ -87,39 +90,54 @@ def get_draw_list(support_chars, save_dir, font_name, label_lines):
 def make_fonts_dataset(config_args, font_name, img_q):
     label_lines = []
     font_path = f"fonts/{font_name}.ttf"
-    support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
-    print(f"{font_name} support size: {len(support_chars)}")
-    if support_chars:
-        for font_size in config_args.font_sizes:
-            tmp_support_chars = support_chars.copy()
-            font, font_size = font_init(font_path, encoding, config_args.fix_font_size, font_size=font_size)
-            if font.size < 11:
-                # exclude small cjk ideograph
-                tmp_support_chars = exclude_range(tmp_support_chars, 0x3300, 0x9FFF )
-            save_dir = f"{config_args.storage_dir}font_data_72/{font_name}_{font_size}_data"
-            if config_args.is_corpus_draw:
-                save_dir = f'{save_dir}_corpus'
-            draw_list = get_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
-            # generate font data
-            make_font_data(draw_list, font, img_q)
-            print(f"font: {font_name}, font size: {font_size} done")
-    else:
-        print(f"{font_path} is empty")
+    error_font_size = 0
+    try:
+        support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
+        print(f"{font_name} support size: {len(support_chars)}")
+        if support_chars:
+            for font_size in config_args.font_sizes:
+                tmp_support_chars = support_chars.copy()
+                font, font_size = font_init(font_path, encoding, config_args.fix_font_size, font_size=font_size)
+                error_font_size = font_size
+                if font.size < 11:
+                    # exclude small cjk ideograph
+                    tmp_support_chars = exclude_range(tmp_support_chars, 0x3300, 0x9FFF )
+                save_dir = f"{config_args.storage_dir}font_data_72/{font_name}_{font_size}_data"
+                if config_args.is_corpus_draw:
+                    save_dir = f'{save_dir}_corpus'
+                draw_list = get_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
+                # generate font data
+                make_font_data(draw_list, font, img_q)
+                print(f"font: {font_name}, font size: {font_size} done, q size: {img_q.qsize()}")
+        else:
+            print(f"{font_path} is empty")
+    except Exception as e:
+        print(f"make {font_name}_{error_font_size} dataset error: {e}")
     return label_lines, update_dict(support_chars, encoding)
 
-def run_pool(config_args, pool_count, img_q):
-    pool = Pool(pool_count)
+def run_pool(config_args, pool_count, img_q, font_label_list, font_dict_set):
     results = dict()
-    for font_name in font_name_sub_list:
-        results[font_name] = pool.apply_async(make_fonts_dataset, args=(config_args, font_name, img_q)) 
-    pool.close()
-    pool.join()
-    return results
+    with Pool(pool_count) as pool:
+        results = pool.starmap(make_fonts_dataset, [(config_args, font_name, img_q) for font_name in font_name_sub_list]) 
+        for result in results:
+            label_lines, korean_dict = result
+            font_label_list += label_lines
+            font_dict_set.update(korean_dict)
 
 if __name__ == '__main__':
     config_args = get_args()
+    dict_path = "korean_dict.txt"
+    valid_char_set = set()
     if config_args.is_corpus_draw:
-        corpus_lines = get_corpus_lines("../CorpusPreprocess/corpus/raw_text.txt")
+        corpus_words = get_corpus_words("../CorpusPreprocess/corpus/raw_text.txt")
+        config_args.tar_path = config_args.tar_path[:-7] + '_corpus.tar.gz'
+        if os.path.exists(dict_path):
+            with open(dict_path, "r", encoding="utf-8") as kor_dict_file:
+                valid_char_set = {line[:-1] for line in kor_dict_file}
+                print(f"origin words size: {len(corpus_words)}")
+                corpus_words = [word for word in corpus_words if not set(word) - valid_char_set]
+                print(f"valid words size: {len(corpus_words)}")
+
     font_label_list = []
     font_dict_set = set()
     pool_count = min(config_args.pool_count, len(config_args.font_name_list))
@@ -127,7 +145,7 @@ if __name__ == '__main__':
         pool_count -= 1 
 
     with Manager() as manager:
-        img_q = manager.Queue()
+        img_q = manager.Queue(5000)
         sub_group_count = len(config_args.font_name_list) // pool_count
         if len(config_args.font_name_list) % pool_count > 0:
             sub_group_count += 1
@@ -139,18 +157,17 @@ if __name__ == '__main__':
             start_font_idx = sub_group_idx * pool_count
             font_name_sub_list = config_args.font_name_list[start_font_idx:start_font_idx + pool_count]
             pool_count = min(pool_count, len(font_name_sub_list))
-            results = run_pool(config_args, pool_count, img_q)
-            for font_name in font_name_sub_list:
-                label_lines, korean_dict = results[font_name].get()
-                font_label_list += label_lines
-                font_dict_set = font_dict_set.union(korean_dict)
+            run_pool(config_args, pool_count, img_q, font_label_list, font_dict_set)
             img_q.put('end')
         print(f"dataset size: {len(font_label_list)}")
         print("data zipping")
         wirter_process.join()
     label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train.txt'
     write_font_label_file(label_name, font_label_list)
-    with open("korean_dict.txt", "w", encoding="utf-8") as kor_dict_file:
-        for inv_char_table in convert_dict_list:
-            font_dict_set |= set(inv_char_table.values())
-        kor_dict_file.write('\n'.join(sorted(list(font_dict_set))))
+    print(f"label saved: {label_name}")
+    print(f"tar saved: {config_args.tar_path}")
+    if not config_args.is_corpus_draw:
+        with open(dict_path, "w", encoding="utf-8") as kor_dict_file:
+            for inv_char_table in convert_dict_list:
+                font_dict_set |= set(inv_char_table.values())
+            kor_dict_file.write('\n'.join(sorted(list(font_dict_set))))

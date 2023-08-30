@@ -12,7 +12,7 @@ def posix_path_to_str(path_arg):
 def get_args():
     parser = argparse.ArgumentParser()
     storage_dir = "/mnt/d/train_dat/font_data"
-    storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/test/"
+    storage_dir = "."
     os.makedirs(storage_dir, exist_ok=True)
     parser.add_argument("--storage_dir", type=posix_path_to_str, default=storage_dir)
     parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}/font_data.tar.gz")
@@ -21,14 +21,15 @@ def get_args():
     parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum', 'hy헤드라인m', 'Gungsuh', 'Batang', 'Gulim', 'HY견고딕'])
     # parser.add_argument("--font_name_list", type=list, default=['휴먼명조', 'Dotum'])
     # 8, 10, 24 fix sizes, 11, 22, 33, 44, 55 interval random sizes
-    # parser.add_argument("--font_sizes", type=list, default=[8, 10, 24])
-    parser.add_argument("--font_sizes", type=list, default=[8])
+    # parser.add_argument("--font_sizes", type=list, default=reversed([8, 10, 24, 11, 22, 33, 44, 55]))
+    # parser.add_argument("--font_sizes", type=list, default=[44, 55])
+    parser.add_argument("--font_sizes", type=list, default=[8, ])
 
     # option
-    parser.add_argument("--is_corpus_draw", type=bool, default=False)
+    parser.add_argument("--is_corpus_draw", type=bool, default=True)
     parser.add_argument("--fix_font_size", type=bool, default=True)
     parser.add_argument("--ramdom_glyph_concat", type=bool, default=True)
-    parser.add_argument("--k_size", type=int, default=200)
+    parser.add_argument("--random_word_count", type=int, default=200000)
     parser.add_argument("--pool_count", type=int, default=os.cpu_count())
     return parser.parse_args()
 
