@@ -10,12 +10,12 @@ def posix_path_to_str(path_arg):
 def init_args():
     
     if platform.system() == 'Linux':
-        storage_dir = "/mnt/d/train_data/pdf/"
         storage_dir = "/home/sayi/workspace/OCR/PaddleOCR/train_data/pdf/"
+        storage_dir = "/mnt/d/train_data/pdf/"
         pdf_root = "/mnt/c/Exception/"
     else:
-        storage_dir = "D:/train_data/pdf/"
         storage_dir = "C:/train_data/test/"
+        storage_dir = "D:/train_data/pdf/"
         pdf_root = "C:/Exception/"
     parser = argparse.ArgumentParser()
 
@@ -25,16 +25,16 @@ def init_args():
     parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}rec_pdf.tar.gz")
 
     # debug paths
-    parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/test/boxed")
-    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/test/converted")
-    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/test/cropped")
-    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
+    # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/boxed")
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
 
     # crawling pdf paths
-    # parser.add_argument("--boxed_dir", type=bool, default=False)
-    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
-    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/new_pdf")
+    parser.add_argument("--boxed_dir", type=bool, default=False)
+    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
+    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
+    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/pdf_files")
 
     # corpus paths
     # parser.add_argument("--boxed_dir", type=bool, default=False)
@@ -54,15 +54,20 @@ def init_args():
     parser.add_argument("--timeout", type=int, default=1200)
     parser.add_argument("--thread_count", type=int, default=4)
     parser.add_argument("--dpi", type=int, default=200)
-    parser.add_argument("--last_page", type=int, default=1)
+    # page 옵션은 되도록 지양할 것, 이미지 생성 장수랑 pdf page 동기화 안되서 터질 수 있다.
+    # 수정했으면 이전 생성 데이터 싹 지우고 다시 생성할 것.
+    parser.add_argument("--first_page", type=int, default=3) 
+    parser.add_argument("--last_page", type=int, default=3)
 
     # convert and crop option
     parser.add_argument("--pdf2image_bool", type=bool, default=True)
     parser.add_argument("--crop_image_save", type=bool, default=False)
+    parser.add_argument("--bbox_image_save", type=bool, default=False)
+    parser.add_argument("--write_tarball", type=bool, default=True)
     parser.add_argument("--dpi_random", type=bool, default=False)
     parser.add_argument("--crop_line_bool", type=bool, default=False)
+    parser.add_argument("--merge_bbox", type=bool, default=False)
     parser.add_argument("--pool_count", type=int, default=os.cpu_count())
-    # parser.add_argument("--pool_count", type=int, default=3)
     
     return parser
 
@@ -77,6 +82,7 @@ def get_pdf2img_option(args):
         "timeout" : args.timeout,
         "thread_count" : args.thread_count,
         "dpi" : args.dpi,
+        # "first_page" : args.first_page,
         # "last_page" : args.last_page,
     }
 

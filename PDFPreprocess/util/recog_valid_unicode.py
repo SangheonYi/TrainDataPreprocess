@@ -51,8 +51,8 @@ sys.path.append(os.path.abspath(os.path.join(__dir__, '../../')))
 from OCRUnicodeRange import convert_dict_list
 
 convert_won_dict = {
-    chr(0x5c): chr(0x20a9), # \ ₩ basic latin back slash
-    chr(0xffe6): chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
+    0x5c: chr(0x20a9), # \ ₩ basic latin back slash
+    0xffe6: chr(0x20a9), # ￦ ₩ Halfwidth and Fullwidth Forms Fullwidth won sign
 }
 convert_dict_list.append(convert_won_dict)
 
@@ -60,17 +60,9 @@ for convert_dict in convert_dict_list:
     convert_dicts_keys = convert_dicts_keys.union(convert_dict.keys())
     convert_dicts_vals = convert_dicts_vals.union(convert_dict.values())
 
-def replace_to_valid_chr(txt_chr_set, txt, convert_dict):
-    for chr in txt_chr_set.intersection(convert_dict.keys()):
-        txt = txt.replace(chr, convert_dict[chr])
-    return txt
-
-def txt2valid_range(txt):
-    txt_chr_set = set(txt)
-    need_convert_chars = txt_chr_set.intersection(convert_dicts_keys)
-    if need_convert_chars:
-        for convert_dict in convert_dict_list:
-            txt = replace_to_valid_chr(need_convert_chars, txt, convert_dict)
+def txt2valid_range(txt:str):
+    for convert_dict in convert_dict_list:
+        txt = txt.translate(convert_dict)
     return txt
 
 if __name__ == '__main__':

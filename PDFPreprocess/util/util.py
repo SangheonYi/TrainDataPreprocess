@@ -46,6 +46,7 @@ def write_label(label_dir, label_list, label_name):
     label_path = f'{label_dir}/{label_name}.txt'
     with open(label_path, 'w', encoding='utf-8') as label_file:
         label_file.write(label)
+    print(f"label saved: {label_path}")
 
 def write_imgs2tar(
     images: List,

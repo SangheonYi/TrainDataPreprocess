@@ -14,12 +14,12 @@ def margin_and_merge_bbox(low_level_bbox_list, margin_rate, pdf: PDFForTrainData
 
 def merge_section_bbox(pdf: PDFForTrainData, word_bbox_list):
     # draw word box
-    pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
+    # pdf.draw_bboxes("word box", word_bbox_list, draw_coord=True, bbox_only=True)
     # merge horizontal
     line_bbox_list = margin_and_merge_bbox(word_bbox_list, 0.23, pdf)
     # merge vertical
     section_bbox_list = margin_and_merge_bbox(line_bbox_list, 0.3, pdf, 
-                                              is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=True)
+                                              is_horizon=False, margin_box_color='blue', merged_box_color='yellow', draw_high_level_box=False)
     det_section_labels = []
     for i, merged_coord in enumerate(section_bbox_list):
         left, upper, right, lower = merged_coord
