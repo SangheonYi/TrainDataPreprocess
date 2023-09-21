@@ -6,8 +6,10 @@ from multiprocessing import Pool, Process, Manager
 from scipy.stats import loguniform
 import random
 import time
+import traceback
+from pathlib import Path
 
-from util import get_random_words, get_corpus_words, get_args
+from util import get_valid_n_pair, get_corpus_words, get_args
 from DataCollector import DataCollector
 from OCRUnicodeRange import total_exclude_unicodes_list, won_dict, get_ttf_support_chars, write_font_label_file, exclude_range, convert_dict_list
 
@@ -32,10 +34,12 @@ def make_font_data(draw_list, font, img_q):
         draw.text(text_coord, text_to_draw, font=font, fill="black")
 
         # save image directly
-        # image.save(save_path)
         if (image, training_path) == None:
             print("😀", save_path, text_to_draw)
-        img_q.put((image, training_path))
+        img_data = [image, training_path]
+        if config_args.save_img :
+            img_data += save_path
+        img_q.put(img_data)
 
 def update_dict(support_chars, encoding):
     return set(support_chars) if encoding.startswith("utf") else set()
@@ -49,7 +53,7 @@ def sample_size(start_point, step_size, boundary):
 def get_random_gt(target_char, support_chars, font_name, ramdom_glyph_concat):
     random_chars = ''
     if ramdom_glyph_concat:
-        random_chars = random.choices(support_chars, k=random.randint(15,23))
+        random_chars = random.choices(support_chars, k=random.randint(1,2))
     joined = ''.join(random_chars)
     to_draw_str = f"{target_char}{joined}"
     random_gt = to_draw_str.translate(won_dict[font_name])
@@ -60,31 +64,31 @@ def get_random_gt(target_char, support_chars, font_name, ramdom_glyph_concat):
 
 def append_drawlist(draw_list, sub_label_lines, valid_gt, to_draw_str, save_path):
     global config_args
-
-    training_path = save_path.replace(config_args.storage_dir, "")
+    save_path_posix = str(Path(save_path).as_posix())
+    train_data_dir_idx = save_path_posix.find('train_data')
+    training_path = save_path_posix[train_data_dir_idx:]
     sub_label_lines.append(f"{training_path}\t{valid_gt}\n")
     draw_list.append((to_draw_str, save_path, training_path))
 
-def get_draw_list(support_chars, save_dir, font_name, label_lines):
+def get_corpus_draw_list(valid_words, save_dir, font_name, label_lines):
+    draw_list = []
+    for idx, word in enumerate(valid_words):
+        save_path = f'{save_dir}/{idx}.jpg'
+        valid_gt = word.translate(won_dict[font_name])
+        append_drawlist(draw_list, label_lines, valid_gt, word, save_path)
+    return draw_list
+
+def get_font_draw_list(support_chars, save_dir, font_name, label_lines):
     global config_args
-    global corpus_words
 
     draw_list = []
-    os.makedirs(save_dir, exist_ok=True)
-    if config_args.is_corpus_draw:
-        support_char_set = set(support_chars)
-        for idx, word in enumerate(get_random_words(corpus_words, config_args.random_word_count)):
-            if set(word) - support_char_set:
-                continue
-            save_path = f'{save_dir}/{idx}.jpg'
-            valid_gt = word.translate(won_dict[font_name])
-            append_drawlist(draw_list, label_lines, valid_gt, word, save_path)
-    else:
-        for idx, target_char in enumerate(support_chars):
-            char_code = ord(target_char)
-            to_draw_str, random_gt = get_random_gt(target_char, support_chars, font_name, config_args.ramdom_glyph_concat)
-            save_path = f'{save_dir}/{idx}_{char_code}.jpg'
-            append_drawlist(draw_list, label_lines, random_gt, to_draw_str, save_path)
+    if config_args.save_img:
+        os.makedirs(save_dir, exist_ok=True)
+    for idx, target_char in enumerate(support_chars):
+        char_code = ord(target_char)
+        to_draw_str, random_gt = get_random_gt(target_char, support_chars, font_name, config_args.ramdom_glyph_concat)
+        save_path = f'{save_dir}/{idx}_{char_code}.jpg'
+        append_drawlist(draw_list, label_lines, random_gt, to_draw_str, save_path)
     return draw_list
 
 def make_fonts_dataset(config_args, font_name, img_q):
@@ -95,24 +99,37 @@ def make_fonts_dataset(config_args, font_name, img_q):
         support_chars, encoding = get_ttf_support_chars(font_path, total_exclude_unicodes_list)
         print(f"{font_name} support size: {len(support_chars)}")
         if support_chars:
+            if config_args.is_corpus_draw:
+                start = time.time()
+                global corpus_words
+                tmp_support_chars = support_chars.copy()
+                valid_words = get_valid_n_pair(corpus_words['kor'], config_args.word_count, tmp_support_chars)
+                valid_words += get_valid_n_pair(corpus_words['eng'], config_args.word_count, tmp_support_chars)
+                print(f"{font_name} get valid words spent:{time.time() - start}")
+
             for font_size in config_args.font_sizes:
                 tmp_support_chars = support_chars.copy()
-                font, font_size = font_init(font_path, encoding, config_args.fix_font_size, font_size=font_size)
-                error_font_size = font_size
+                font, init_font_size = font_init(font_path, encoding, config_args.fix_font_size, font_size=font_size)
+                error_font_size = init_font_size
                 if font.size < 11:
                     # exclude small cjk ideograph
                     tmp_support_chars = exclude_range(tmp_support_chars, 0x3300, 0x9FFF )
-                save_dir = f"{config_args.storage_dir}font_data_72/{font_name}_{font_size}_data"
+                save_dir = f"{config_args.storage_dir}/{font_name}_{init_font_size}_data"
                 if config_args.is_corpus_draw:
                     save_dir = f'{save_dir}_corpus'
-                draw_list = get_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
+                if config_args.is_corpus_draw:
+                    draw_list = get_corpus_draw_list(valid_words, save_dir, font_name, label_lines)
+                else:
+                    draw_list = get_font_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
+                start = time.time()
                 # generate font data
                 make_font_data(draw_list, font, img_q)
-                print(f"font: {font_name}, font size: {font_size} done, q size: {img_q.qsize()}")
+                print(f"draw spent: {time.time() - start}")
+                print(f"font: {font_name}, font size: {init_font_size} done, q size: {img_q.qsize()}")
         else:
             print(f"{font_path} is empty")
     except Exception as e:
-        print(f"make {font_name}_{error_font_size} dataset error: {e}")
+        print(f"{traceback.format_exc()}\nmake {font_name}_{error_font_size} dataset error: {e}")
     return label_lines, update_dict(support_chars, encoding)
 
 def run_pool(config_args, pool_count, img_q, font_label_list, font_dict_set):
@@ -131,12 +148,6 @@ if __name__ == '__main__':
     if config_args.is_corpus_draw:
         corpus_words = get_corpus_words("../CorpusPreprocess/corpus/raw_text.txt")
         config_args.tar_path = config_args.tar_path[:-7] + '_corpus.tar.gz'
-        if os.path.exists(dict_path):
-            with open(dict_path, "r", encoding="utf-8") as kor_dict_file:
-                valid_char_set = {line[:-1] for line in kor_dict_file}
-                print(f"origin words size: {len(corpus_words)}")
-                corpus_words = [word for word in corpus_words if not set(word) - valid_char_set]
-                print(f"valid words size: {len(corpus_words)}")
 
     font_label_list = []
     font_dict_set = set()
@@ -162,7 +173,7 @@ if __name__ == '__main__':
         print(f"dataset size: {len(font_label_list)}")
         print("data zipping")
         wirter_process.join()
-    label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train.txt'
+    label_name = 'rec_corpus_train.txt' if config_args.is_corpus_draw else 'rec_font_train_8_15_range.txt'
     write_font_label_file(label_name, font_label_list)
     print(f"label saved: {label_name}")
     print(f"tar saved: {config_args.tar_path}")
