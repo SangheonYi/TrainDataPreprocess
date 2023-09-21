@@ -22,7 +22,7 @@ def init_args():
     # paths
     parser.add_argument("--label_dir", type=posix_path_to_str, default=f"{storage_dir}labels")
     parser.add_argument("--font_dir", type=posix_path_to_str, default="../font_data/fonts")
-    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}rec_pdf.tar.gz")
+    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}pdf.tar.gz")
 
     # debug paths
     # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/boxed")
@@ -30,23 +30,29 @@ def init_args():
     # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/cropped")
     # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
 
-    # crawling pdf paths
-    parser.add_argument("--boxed_dir", type=bool, default=False)
-    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
-    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
-    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/pdf_files")
+    # debug paths
+    # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/boxed")
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/pdf_files")
 
-    # corpus paths
-    # parser.add_argument("--boxed_dir", type=bool, default=False)
-    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}corpus_converted")
-    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}corpus_cropped")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/corpus_pdf")
+    # crawling pdf paths
+    # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/2l_boxed")
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}/2l_converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/2l_cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/pdf_files")
 
     # eng eval paths
     # parser.add_argument("--boxed_dir", type=bool, default=False)
     # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_converted")
     # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_cropped")
-    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default="C:/Exception/det_clean_file/issue")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
+
+    # kor eval paths
+    parser.add_argument("--boxed_dir", type=bool, default=False)
+    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_converted")
+    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_cropped")
+    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
 
     # pdf2img_option
     parser.add_argument("--fmt", type=str, default="png")
@@ -56,8 +62,8 @@ def init_args():
     parser.add_argument("--dpi", type=int, default=200)
     # page 옵션은 되도록 지양할 것, 이미지 생성 장수랑 pdf page 동기화 안되서 터질 수 있다.
     # 수정했으면 이전 생성 데이터 싹 지우고 다시 생성할 것.
-    parser.add_argument("--first_page", type=int, default=3) 
-    parser.add_argument("--last_page", type=int, default=3)
+    # parser.add_argument("--first_page", type=int, default=3) 
+    # parser.add_argument("--last_page", type=int, default=3)
 
     # convert and crop option
     parser.add_argument("--pdf2image_bool", type=bool, default=True)
