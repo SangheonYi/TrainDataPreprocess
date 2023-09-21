@@ -15,7 +15,7 @@ with open('sayi_dict.txt', 'r', encoding='utf-8') as sayi_dict:
 
 def append_label_list(coor, points, crop_list, gt_word, gt_list):
     left, upper, right, lower = coor
-    if right - left < 3 or lower - upper < 3: # trash image condition
+    if right - left < 1 or lower - upper < 1: # trash image condition
         return
     if not gt_word: # OOV unicode
         return
