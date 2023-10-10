@@ -70,8 +70,20 @@ class PDFForTrainData():
         label_text = []
         current_page = self.pdf_document[page_idx].get_textpage()
         if self.crop_line:
-            # TODO parse line object
-            current_page.extractDICT()
+            page_dict = current_page.extractDICT()
+            for page_blocks in page_dict['blocks']:
+                for line in page_blocks['lines']:
+                    coord = [e * self.scale for e in line['bbox']]
+                    line_txt = ''
+                    for span in line['spans']:
+                        line_txt = span['text'] if len(line_txt) == 0 else f"{line_txt} {span['text']}" 
+                    line_gt = txt2valid_range(line_txt)
+                    invalid_chars = set(line_gt) - sayi_vocab
+                    if invalid_chars:
+                        self.invalid_chr_set |= invalid_chars
+                        self.draw_bboxes(line_gt, [coord], box_color='orange', font_color="red", bbox_only=False)
+                    else:
+                        append_label_list(coord, points, crop_list, line_gt, label_text)
         else:
             for word in current_page.extractWORDS():
                 word_gt = txt2valid_range(word[4])

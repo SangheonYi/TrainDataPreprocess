@@ -26,7 +26,10 @@ def crop_from_page(configs, pdf:PDFForTrainData, page_idx):
             os.makedirs(pdf.cropped_dir, exist_ok=True)
         crop_train_path = to_train_path(cropped_path)
         if configs.write_tarball:
-            pdf.img_q.put((crop_img, crop_train_path, cropped_path))
+            data = [crop_img, crop_train_path]
+            if configs.crop_image_save:
+                data += [cropped_path]
+            pdf.img_q.put(data)
         pdf.ocr_labels.rec_label_list.append(f'{crop_train_path}\t{text}\n')
         page_det_labels.append({"transcription": text, "points": bbox_label})
     return crop_list, page_det_labels
@@ -94,14 +97,8 @@ def convert_pdf2crop(pdf_names, configs, img_q: Queue, idx_dpi):
 if __name__ == '__main__':
     configs = parse_args()
     start = time.time()
-    pdf_list = 'pdf_list/two_line_pdf.txt' 
-    pdf_list = 'pdf_list/rec_valid_pdf.txt' 
-    with open(pdf_list, 'r', encoding='utf-8') as valid_pdf_file:
-        pdf_names = {valid_pdf_name.strip('.pdf\n') for valid_pdf_name in valid_pdf_file.readlines()}
-        
-    pdf_names = sorted(list(pdf_names))
-    pdf_names = ['kor_eval']
-    idx_dpi = list(product(range(0, len(pdf_names), configs.pool_count), range(72, 201, 16)))
+    pdf_names = [pdf_path.stem for pdf_path in get_file_list(configs.pdf_dir)]
+    idx_dpi = list(product(range(0, len(pdf_names), configs.pool_count), range(72, 201, 64)))
     print('pdf length', len(pdf_names))
 
     with Manager() as manager:
@@ -116,7 +113,7 @@ if __name__ == '__main__':
             wirter_process.join()
     print(f"total spent: {time.time() - start}")
     print("excluded_chr_set:", sorted(excluded_chr_set))
-    write_label(configs.label_dir, total_labels.rec_label_list, f"kor_eval")
+    write_label(configs.label_dir, total_labels.rec_label_list, f"space_eval")
     # write_label(configs.label_dir, total_labels.det_label_list, 'det_train')
     # write_label(configs.label_dir, total_labels.det_section_label_list, 'det_section_train')
     # is_valid_rec_list(f"{configs.label_dir}/eng_adminis_eval.txt")

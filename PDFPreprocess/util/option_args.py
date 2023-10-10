@@ -22,7 +22,7 @@ def init_args():
     # paths
     parser.add_argument("--label_dir", type=posix_path_to_str, default=f"{storage_dir}labels")
     parser.add_argument("--font_dir", type=posix_path_to_str, default="../font_data/fonts")
-    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}pdf.tar.gz")
+    parser.add_argument("--tar_path", type=posix_path_to_str, default=f"{storage_dir}eng_pdf.tar.gz")
 
     # debug paths
     # parser.add_argument("--boxed_dir", type=posix_path_to_str, default=f"{storage_dir}/issue/boxed")
@@ -42,6 +42,12 @@ def init_args():
     # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}/2l_cropped")
     # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/pdf_files")
 
+    # eng pdf paths
+    # parser.add_argument("--boxed_dir", type=bool, default=False)
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}eng_pdf_converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}eng_pdf_cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/eng_pdf")
+
     # eng eval paths
     # parser.add_argument("--boxed_dir", type=bool, default=False)
     # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}eng_eval_converted")
@@ -49,10 +55,16 @@ def init_args():
     # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
 
     # kor eval paths
+    # parser.add_argument("--boxed_dir", type=bool, default=False)
+    # parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_converted")
+    # parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_cropped")
+    # parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
+
+    # space eval
     parser.add_argument("--boxed_dir", type=bool, default=False)
-    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_converted")
-    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}kor_eval_cropped")
-    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/issue")
+    parser.add_argument("--pdf_converted_dir", type=posix_path_to_str, default=f"{storage_dir}space_eval_converted")
+    parser.add_argument("--cropped_dir", type=posix_path_to_str, default=f"{storage_dir}space_eval_cropped")
+    parser.add_argument("--pdf_dir", type=posix_path_to_str, default=f"{pdf_root}det_clean_file/space_eval")
 
     # pdf2img_option
     parser.add_argument("--fmt", type=str, default="png")
@@ -63,15 +75,15 @@ def init_args():
     # page 옵션은 되도록 지양할 것, 이미지 생성 장수랑 pdf page 동기화 안되서 터질 수 있다.
     # 수정했으면 이전 생성 데이터 싹 지우고 다시 생성할 것.
     # parser.add_argument("--first_page", type=int, default=3) 
-    # parser.add_argument("--last_page", type=int, default=3)
+    parser.add_argument("--last_page", type=int, default=1)
 
     # convert and crop option
     parser.add_argument("--pdf2image_bool", type=bool, default=True)
-    parser.add_argument("--crop_image_save", type=bool, default=False)
+    parser.add_argument("--crop_image_save", type=bool, default=True) # write_tarball must be true to work.
     parser.add_argument("--bbox_image_save", type=bool, default=False)
     parser.add_argument("--write_tarball", type=bool, default=True)
     parser.add_argument("--dpi_random", type=bool, default=False)
-    parser.add_argument("--crop_line_bool", type=bool, default=False)
+    parser.add_argument("--crop_line_bool", type=bool, default=True)
     parser.add_argument("--merge_bbox", type=bool, default=False)
     parser.add_argument("--pool_count", type=int, default=os.cpu_count())
     
