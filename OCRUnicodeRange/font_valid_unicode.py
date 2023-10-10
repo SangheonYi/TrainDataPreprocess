@@ -73,7 +73,6 @@ def get_ttf_support_chars(font_path:str, exclude_unicodes_list):
     font = TTFont(font_path)
     support_chars = []
     font_name = font_path.split('/')[-1][:-4]
-    print(f"get support character list from {font_path}")
     for cmap in font['cmap'].tables:
         encoding = cmap.getEncoding()
         for i in cmap.cmap.keys():

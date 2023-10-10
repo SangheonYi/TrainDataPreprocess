@@ -53,7 +53,10 @@ def sample_size(start_point, step_size, boundary):
 def get_random_gt(target_char, support_chars, font_name, ramdom_glyph_concat):
     random_chars = ''
     if ramdom_glyph_concat:
-        random_chars = random.choices(support_chars, k=random.randint(1,2))
+        space_cnt = random.randint(1,10)
+        random_chars = random.choices(support_chars, k = 24 - space_cnt)
+        random_chars += [' ' for _ in range(space_cnt)]
+        random.shuffle(random_chars)
     joined = ''.join(random_chars)
     to_draw_str = f"{target_char}{joined}"
     random_gt = to_draw_str.translate(won_dict[font_name])
@@ -70,12 +73,12 @@ def append_drawlist(draw_list, sub_label_lines, valid_gt, to_draw_str, save_path
     sub_label_lines.append(f"{training_path}\t{valid_gt}\n")
     draw_list.append((to_draw_str, save_path, training_path))
 
-def get_corpus_draw_list(valid_words, save_dir, font_name, label_lines):
+def get_corpus_draw_list(valid_chunks, save_dir, font_name, label_lines):
     draw_list = []
-    for idx, word in enumerate(valid_words):
+    for idx, valid_chunk in enumerate(valid_chunks):
         save_path = f'{save_dir}/{idx}.jpg'
-        valid_gt = word.translate(won_dict[font_name])
-        append_drawlist(draw_list, label_lines, valid_gt, word, save_path)
+        valid_gt = valid_chunk.translate(won_dict[font_name])
+        append_drawlist(draw_list, label_lines, valid_gt, valid_chunk, save_path)
     return draw_list
 
 def get_font_draw_list(support_chars, save_dir, font_name, label_lines):
@@ -103,8 +106,9 @@ def make_fonts_dataset(config_args, font_name, img_q):
                 start = time.time()
                 global corpus_words
                 tmp_support_chars = support_chars.copy()
-                valid_words = get_valid_n_pair(corpus_words['kor'], config_args.word_count, tmp_support_chars)
-                valid_words += get_valid_n_pair(corpus_words['eng'], config_args.word_count, tmp_support_chars)
+                valid_chunks = get_valid_n_pair(corpus_words['kor'], config_args.word_count, tmp_support_chars)
+                valid_chunks += get_valid_n_pair(corpus_words['eng'], config_args.word_count, tmp_support_chars)
+                print(f"got {len(valid_chunks)} valid chunks")
                 print(f"{font_name} get valid words spent:{time.time() - start}")
 
             for font_size in config_args.font_sizes:
@@ -118,7 +122,7 @@ def make_fonts_dataset(config_args, font_name, img_q):
                 if config_args.is_corpus_draw:
                     save_dir = f'{save_dir}_corpus'
                 if config_args.is_corpus_draw:
-                    draw_list = get_corpus_draw_list(valid_words, save_dir, font_name, label_lines)
+                    draw_list = get_corpus_draw_list(valid_chunks, save_dir, font_name, label_lines)
                 else:
                     draw_list = get_font_draw_list(tmp_support_chars, save_dir, font_name, label_lines)
                 start = time.time()

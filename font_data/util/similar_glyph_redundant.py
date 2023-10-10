@@ -3,7 +3,6 @@ from pathlib import Path
 sim_glyph_dict = {
     str(0x00b7):''
 }
-print(sim_glyph_dict.keys())
 # katakana middle dot 0xff65
 # middle dot 0x00b7
 # 아래 아 0x119E

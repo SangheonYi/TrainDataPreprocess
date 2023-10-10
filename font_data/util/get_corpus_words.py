@@ -3,22 +3,29 @@ def get_corpus_words(corpus_path):
         kor=[],
         eng=[]
     )
+    max_words = 2000000
     with open(corpus_path, 'r', encoding='utf-8') as corpus_file:
         for line_idx, line in enumerate(corpus_file):
             lang = 'kor' if line_idx % 2 == 0 else 'eng'
             corpus_words[lang] += line[:-1].split()
-            max_words = 2000000
             if len(corpus_words['kor']) > max_words and len(corpus_words['eng']) > max_words:
                 break
     return corpus_words
 
 def get_valid_n_pair(corpus_word_list:list, n:int, support_char_set:set):
-    valid_words = []
+    valid_chunks = []
     half_n = n / 2
+    valid_word = ''
+    
     for corpus_word in corpus_word_list:
-        if len(valid_words) < half_n and set(corpus_word).issubset(support_char_set):
-            valid_words.append(corpus_word)    
-    return valid_words
+        if len(valid_chunks) < half_n and set(corpus_word).issubset(support_char_set):
+            tmp = f"{valid_word} {corpus_word}"
+            if len(tmp) > 25:
+                valid_chunks.append(valid_word)
+                valid_word = corpus_word
+            else:
+                valid_word = tmp
+    return valid_chunks
 
 if __name__ == "__main__":
     count = 0
